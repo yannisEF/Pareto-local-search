@@ -9,6 +9,7 @@ from utils import *
 from pls1 import PLS1
 
 class PLS2(PLS1):
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
