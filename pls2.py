@@ -9,12 +9,18 @@ from utils import *
 from pls1 import PLS1
 
 class PLS2(PLS1):
+    """
+    Enhanced version of PLS for 2 objectives only, decreases computing time but doesn't change score
+    """
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def update(self, Pareto, x):
-        """Pareto front is now ordered, index 0 rising and 1 descending"""
+        """
+        Pareto front is now ordered, index 0 rising and 1 descending
+        """
+        
         score_pareto = [get_score(y) for y in Pareto]
         score_x = get_score(x)
 
