@@ -140,5 +140,5 @@ class PLS1:
                 plt.show()
     
 if __name__ == "__main__":
-    pls1 = PLS1(nb_tries=10, nb_files=2)
+    pls1 = PLS1(nb_tries=1, nb_files=1)
     pls1.run()
