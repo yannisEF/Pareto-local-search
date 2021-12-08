@@ -18,29 +18,41 @@ class PLS2(PLS1):
 
     def update(self, Pareto, x):
         """
-        Pareto front is now ordered, index 0 rising and 1 descending
+        Pareto front is now ordered, index 0 rising (therefore 1 descending)
         """
-        
+
+        # Doesn't work in more than 2 dimensions
+        if len(x[0]) > 3:
+            raise ValueError("PLS2 is only available with 2 objectives")
+
         score_pareto = [get_score(y) for y in Pareto]
         score_x = get_score(x)
 
+        # Get the index to insert the solution at
         i = bisect_left(score_pareto, score_x)
 
-        notDominated = True
-        dominated = None
-        if i != len(Pareto) and is_score_dominated(score_x, score_pareto[i]):   notDominated = False
-        if i != 0 and not is_score_dominated(score_pareto[i-1], score_x): dominated = Pareto[i-1]
+        dominated = []
+        # If the following solution doesn't dominate x, it can be added
+        if i != len(Pareto) and is_score_dominated(score_x, score_pareto[i]):
+            return False
 
-        try:
-            Pareto.remove(dominated)
-        except ValueError:
-            pass
+        # Only the preceding solutions can dominate x, we iterate through them to check
+        for index in range(i-1, -1, -1):
+            # If a solution is not dominated by x, neither are the rest, so we break
+            if is_score_dominated(score_pareto[index], score_x):
+                dominated.append(Pareto[index])
+            else:
+                break
+        
+        # We remove the dominted solutions from the Pareto front
+        for sol in dominated:
+            Pareto.remove(sol)
 
-        if notDominated is True:
-            Pareto[:] = Pareto[:i] + [x] + Pareto[i:]
-
-        return notDominated
+        # We insert x into the Pareto front
+        Pareto[:] = Pareto[:i] + [x] + Pareto[i:]
+        print(len(Pareto))
+        return True
     
 if __name__ == "__main__":
-    pls2 = PLS2()
+    pls2 = PLS2(nb_files=1, nb_tries=1)
     pls2.run()

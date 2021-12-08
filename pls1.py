@@ -94,24 +94,21 @@ class PLS1:
         score_x, dominated_by_x = get_score(x), []
 
         # We iterate through the Pareto front and compare the solutions with x
-        notDominated = True
         for y in Pareto:
             score_y = get_score(y)
             if is_score_dominated(score_y, score_x):
                 dominated_by_x.append(y)
             elif is_score_dominated(score_x, score_y):
-                notDominated = False
-                break
+                return False
 
         # We remove all the dominated solutions
         for y in dominated_by_x:
             Pareto.remove(y)
 
         # We add the solution to the Pareto front if it is not dominated
-        if notDominated is True:
-            Pareto.append(x)
+        Pareto.append(x)
 
-        return notDominated
+        return True
 
     def run(self, verbose=True, show=True, show_best=True):
         """
@@ -131,7 +128,7 @@ class PLS1:
                 show = len(instance["Objects"][0]) <= 3
 
                 # Initializing plotting parameters
-                best_distance, best_len_pop, best_pop = float('inf'), [], []
+                best_distance, best_len_population, best_pop = float('inf'), [], []
                 fig, axs = plt.subplots(1 if show_best is True else self.nb_tries, 2)
 
             # Average the results over a number of runs
@@ -140,35 +137,47 @@ class PLS1:
 
                 self.times.append(-time.time())
 
-                population = self.get_init_pop(instance) # Get the initial population
-                len_pop = [-1, len(population)] # History of the populations length over
-                hasAddedSolution = True # Convergence check : have we added a solution to the front?
+                pareto = self.get_init_pop(instance)
+                population = pareto[:] # Get the initial population
+                len_population = [-1, len(population)] # History of the pareto front's length
 
-                # We continue until convergence is reached (population hasn't changed and we haven't added any solution)
-                while len_pop[-1] != len_pop[-2] or hasAddedSolution is True:
+                new_population = []
+                visited = pareto[:] # history of already visited solution
+
+                # We continue until convergence is reached
+                while len(population) != 0:
                     for current in population:
                         # We retrieve the neighbours of the current solution
                         neighbours = self.get_neighbours(current, instance)
-
                         for neighbour in neighbours:
                             # We proceed with the 1-1 exchange
                             new_solution = current[:] + neighbour[1]
                             new_solution.remove(neighbour[0])
                             
                             # We do a preliminary check to see if the neighbour is not already dominated by the current solution
-                            if new_solution not in population and not is_dominated(new_solution, current):
+                            if not is_dominated(new_solution, current):
                                 # We update the Pareto front
-                                hasAddedSolution = self.update(population, new_solution)
+                                if self.update(pareto, new_solution):
+                                    self.update(new_population, new_solution)
+
+                        # Update the history of already visited solutions to avoid loops
+                        if current not in visited:
+                            visited.append(current)
+                    
+                    # The population holds the newfound solutions that are potentially on the Pareto front
+                    population = [p for p in new_population if p not in visited]
+                    new_population = []
 
                     # Update the history        
-                    len_pop.append(len(population))
-                len_pop = len_pop[1:]
+                    len_population.append(len(population))
+
+                len_population = len_population[1:]
 
                 # Compute the different scores
                 self.times[-1] += time.time()
                 if self.root2 is not None:
-                    self.proportions.append(get_proportion(exacte, population))
-                    self.distances.append(get_distance(exacte, population))
+                    self.proportions.append(get_proportion(exacte, pareto))
+                    self.distances.append(get_distance(exacte, pareto))
 
                 # We add the Pareto front to the graphical output
                 if show is True:
@@ -176,17 +185,17 @@ class PLS1:
                     if show_best is True:
                         if self.distances[-1] < best_distance:
                             best_distance = self.distances[-1]
-                            best_len_pop = len_pop
-                            best_pop = population
+                            best_len_population = len_population
+                            best_pareto = pareto
                     else:
                         i1 = 0 if self.nb_tries == 1 else (_, 0)
                         i2 = 1 if self.nb_tries == 1 else (_, 1)
                         
-                        for x in population:    plot_solution(x, ax=axs[i1])
+                        for x in pareto:    plot_solution(x, ax=axs[i1])
                         if self.root2 is not None:
                             plot_non_dominated(exacte, ax=axs[i1])
 
-                        axs[i2].plot(len_pop)
+                        axs[i2].plot(len_population)
                            
             if verbose is True: print("File {} on {} tries:\n\t\ttime: {}\n\t\tproportion: {}\n\t\tdistance: {}"
                                         .format(k, self.nb_tries, get_avg(self.times), get_avg(self.proportions, 3), get_avg(self.distances)))      
@@ -195,12 +204,12 @@ class PLS1:
             if show is True:
                 if show_best is True:
                     axs[0].set_title("Solutions space")
-                    for x in best_pop:  plot_solution(x, ax=axs[0])
+                    for x in best_pareto:  plot_solution(x, ax=axs[0])
                     if self.root2 is not None:
                         plot_non_dominated(exacte, ax=axs[0])
 
                     axs[1].set_title("Evolution of the population's size")
-                    axs[1].plot(best_len_pop)
+                    axs[1].plot(best_len_population)
 
                 plt.show()
     
