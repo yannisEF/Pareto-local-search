@@ -158,7 +158,7 @@ class PLS1:
                             if not is_dominated(new_solution, current):
                                 # We update the Pareto front
                                 if self.update(pareto, new_solution):
-                                    self.update(new_population, new_solution)
+                                    PLS1.update(self, new_population, new_solution)
 
                         # Update the history of already visited solutions to avoid loops
                         if current not in visited:
@@ -168,7 +168,9 @@ class PLS1:
                     population = [p for p in new_population if p not in visited]
                     new_population = []
 
-                    # Update the history        
+                    print(len(population))
+
+                    # Update the history
                     len_population.append(len(population))
 
                 len_population = len_population[1:]

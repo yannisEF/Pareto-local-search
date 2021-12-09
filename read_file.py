@@ -24,6 +24,12 @@ def read_file(filename):
 
     return instance
 
+    # object = instance["Objects"][i]
+    # w, v1, v2 = object["w"], object["v1"], object["v2"]
+
+    # w, v1, v2 = instance[0][i], instance[1][i], instance[2][i]
+
+    # [........................................]
 
 def read_exact_file(filename):
     """
