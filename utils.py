@@ -1,5 +1,6 @@
 import time
 import math
+import random
 
 
 def index_to_values(instance, x):
@@ -74,3 +75,33 @@ def is_dominated(x, y):
     """
 
     return is_score_dominated(get_score(x), get_score(y))
+
+def normalize(A):
+    """
+    Normalize a list so that it sums to 1
+    """
+    
+    sA = sum(A)
+    return [x / sA for x in A]
+
+def get_random_weights(size):
+    """
+    Returns a list of randomly generated weights that sums to 1
+    """
+
+    q = [random.random() for _ in range(size)]
+    return normalize(q)
+
+def compute_performance_value(instance, weights, index):
+    """
+    Compute the performance value of a given object
+    """
+
+    return sum(weights[i] * instance["Objects"][1][i][index] for i in range(len(weights))) / instance["Objects"][0][index]
+
+def compute_performance_value_list(instance, weights, index_objects):
+    """
+    Compute the list of performance values of a given list of objects
+    """
+
+    return [compute_performance_value(instance, weights, v) for v in index_objects]

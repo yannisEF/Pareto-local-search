@@ -9,12 +9,14 @@ class PLS1:
     Pareto local search, naive version
     """
 
-    def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff"):
+    def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None):
         self.nb_files = nb_files
         self.nb_tries = nb_tries
 
+        # The algorithm's input
         self.root = root
         self.root2 = root2
+        self.instance = instance
 
         # Quality testing
         self.times = []
@@ -27,7 +29,7 @@ class PLS1:
         """
 
         pop_index, S = [], 0
-        index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(len(instance["Objects"][0]))))
+        index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(instance["n"])))
 
         # While there is room in the backpack and that there are objects left to choose
         while S <= instance['W'] and len(index_objects) > 0:
@@ -40,7 +42,7 @@ class PLS1:
             S += instance["Objects"][0][new_index_obj]
             
             # Filter the backpack so that only the compatible weigths remain
-            index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(len(instance["Objects"][0]))))
+            index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], index_objects))
 
         return [pop_index]
 
@@ -49,7 +51,7 @@ class PLS1:
         Get a neighbour of the current solution with a 1-1 exchange
         """
         
-        other_index_list = set(range(len(instance["Objects"][0]))) - set(current) # The other pickable objects
+        other_index_list = set(range(instance["n"])) - set(current) # The other pickable objects
         S = sum([instance["Objects"][0][i] for i in current]) # The total weight of the current solution
 
         neighbours = [] # list of neighbours : tuple(object to take off, list of objects to add)
@@ -69,7 +71,7 @@ class PLS1:
                 copy_index_others = set(filter(lambda i: instance["Objects"][0][i] <= instance['W'] - newS, copy_index_others))
 
                 # We add the exchange to the list of neighbours
-                neighbours.append((obj_index, chosen_index_others))
+                neighbours.append(([obj_index], chosen_index_others))
 
                 # While there is room in the backpack and that there are objects left to choose
                 while newS <= instance['W'] and len(copy_index_others) > 0:
@@ -85,6 +87,17 @@ class PLS1:
                     copy_index_others = set(filter(lambda i: instance["Objects"][0][i] <= instance['W'] - newS, copy_index_others))
 
         return neighbours
+    
+    def get_solution_from_neighbours(self, current_index, neighbour_index):
+        """
+        Proceed with a 1-1 exchange as defined in get_neighbours method
+        """
+
+        new_solution_index = current_index[:] + neighbour_index[1]
+        for index_to_remove in neighbour_index[0]:
+            new_solution_index.remove(index_to_remove)
+
+        return new_solution_index
 
     def update(self, instance, Pareto, x):
         """
@@ -110,15 +123,15 @@ class PLS1:
 
         return True
 
-    def run(self, verbose=True, show=True, show_best=True):
+    def run(self, verbose=True, verbose_progress=True, show=True, show_best=True):
         """
         Run multiple times the algorithm on the given root
         """
         
         # Iterate through the root
-        for k in range(self.nb_files):
+        for k in range(self.nb_files if self.root is not None else 1):
             # Read the file
-            instance = read_file(self.root.format(k))
+            instance = self.instance if self.instance is not None else read_file(self.root.format(k))
             if self.root2 is not None:
                 exacte = read_exact_file(self.root2.format(k))
             
@@ -150,9 +163,8 @@ class PLS1:
                         # We retrieve the neighbours of the current solution
                         neighbours_index = self.get_neighbours(current_index, instance)
                         for neighbour_index in neighbours_index:
-                            # We proceed with the 1-1 exchange
-                            new_solution_index = current_index[:] + neighbour_index[1]
-                            new_solution_index.remove(neighbour_index[0])
+                            # We retrieve the new solution from the found neighbours
+                            new_solution_index = self.get_solution_from_neighbours(current_index, neighbour_index)
 
                             # We do a preliminary check to see if the neighbour is not already dominated by the current solution
                             new_solution_weights, current_weights = index_to_values(instance, new_solution_index), index_to_values(instance, current_index)
@@ -168,9 +180,10 @@ class PLS1:
                     
                     # The population holds the newfound solutions that are potentially on the Pareto front
                     population_index = [p for p in new_population_index if set(p) not in visited_index]
-
                     new_population_index = []
-                    print(len(population_index))
+                    
+                    if verbose_progress is True:    print(len(population_index))
+
                     # Update the history
                     len_population.append(len(population_index))
 
@@ -187,22 +200,23 @@ class PLS1:
                 # We add the Pareto front to the graphical output
                 if show is True:
                     # We show only the best solution if asked
-                    if self.root2 is not None and show_best is True:
-                        if self.distances[-1] < best_distance:
-                            best_distance = self.distances[-1]
-                            best_len_population = len_population
-                            best_pareto = pareto_coords
-                    else:
-                        i1 = 0 if self.nb_tries == 1 else (_, 0)
-                        i2 = 1 if self.nb_tries == 1 else (_, 1)
-                        
-                        for x in pareto_coords:
-                            plot_solution(x, ax=axs[i1])
-                        
-                        if self.root2 is not None:
-                            plot_non_dominated(exacte, ax=axs[i1])
+                    if self.root2 is not None:
+                        if show_best is True:
+                            if self.distances[-1] < best_distance:
+                                best_distance = self.distances[-1]
+                                best_len_population = len_population
+                                best_pareto = pareto_coords
+                        else:
+                            i1 = 0 if self.nb_tries == 1 else (_, 0)
+                            i2 = 1 if self.nb_tries == 1 else (_, 1)
+                            
+                            for x in pareto_coords:
+                                plot_solution(x, ax=axs[i1])
+                            
+                            if self.root2 is not None:
+                                plot_non_dominated(exacte, ax=axs[i1])
 
-                        axs[i2].plot(len_population)
+                            axs[i2].plot(len_population)
                            
             if verbose is True: print("File {} on {} tries:\n\t\ttime: {}\n\t\tproportion: {}\n\t\tdistance: {}"
                                         .format(k, self.nb_tries, get_avg(self.times), get_avg(self.proportions, 3), get_avg(self.distances)))      
@@ -220,6 +234,8 @@ class PLS1:
 
                 plt.show()
     
+        return pareto_index
+    
 if __name__ == "__main__":
-    pls1 = PLS1(nb_tries=1, nb_files=1)
+    pls1 = PLS1(nb_tries=1, nb_files=1)  
     pls1.run()

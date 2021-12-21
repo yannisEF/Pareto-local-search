@@ -1,8 +1,4 @@
-from os import popen
 import random
-import matplotlib.pyplot as plt
-
-from bisect import bisect_left
 
 from read_file import *
 from utils import *
@@ -13,7 +9,7 @@ class PLS3(PLS1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.init_S = 1 if "init_S" not in kwargs.keys() else kwargs["init_S"]
+        self.init_S = 30 if "init_S" not in kwargs.keys() else kwargs["init_S"]
 
     def get_init_pop(self, instance):
         """
@@ -24,18 +20,17 @@ class PLS3(PLS1):
         n_dim = len(instance["Objects"][1])
 
         while len(pop_index) < self.init_S:
-            index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(len(instance["Objects"][0]))))
+            index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(instance["n"])))
             
             # Randomly sample a number of weights
-            q = [random.random() for _ in range(n_dim)]
-            q = [x / sum(q) for x in q]
+            q = get_random_weights(n_dim)
             S = 0
             
             indiv_index = []
             while S <= instance['W'] and len(index_objects) > 0:
                 # Define the objects' weights
-                r_obj = [sum(q[i] * instance["Objects"][1][i][v] for i in range(n_dim)) / instance["Objects"][0][v] for v in index_objects]
-                r_obj = [r/sum(r_obj) for r in r_obj]
+                r_obj = compute_performance_value_list(instance, q, index_objects)
+                r_obj = normalize(r_obj)
 
                 # Randomly choose a new object
                 new_index_obj = random.choices(index_objects, weights=r_obj, k=1)[0]
@@ -50,7 +45,7 @@ class PLS3(PLS1):
                 
             if len(indiv_index) == 0: raise ValueError("init_S might be to big to initialize the search")
             else:   pop_index.append(indiv_index)
-                
+
         return pop_index
     
 if __name__ == "__main__":
