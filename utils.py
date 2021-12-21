@@ -2,20 +2,25 @@ import time
 import math
 
 
+def index_to_values(instance, x):
+    """
+    Return the lists of values given an instance and a list of index
+    """
+    return [[instance["Objects"][1][v][i] for i in x] for v in range(len(instance["Objects"][1]))]
+
 def get_score(x):
     """
-    Return sum of the weight of a solution for each objective
+    Return sum of the values of a solution for each objective
     """
 
-    return tuple(sum([i[obj] for i in x]) for obj in sorted(x[0].keys() - {"w"}))
-
+    return tuple(sum(v) for v in x)
 
 def get_proportion(Yexact, Yapprox):
     """
     Return the proportion of solutions exactly approximated
     """
 
-    return sum([get_score(v) in Yexact for v in Yapprox]) / len(Yexact)
+    return len(set(Yapprox) & set(Yexact)) / len(set(Yexact))
 
 
 def d(x, y, P):
