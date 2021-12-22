@@ -10,12 +10,17 @@ def read_file(filename):
     with open(filename, 'r') as f:
         content = [[c for c in l.split(' ') if c not in ["\t", "\n"]] for l in f.readlines()]
 
-    instance = {"n": None, "W": None, "Objects": []}
+    weights, values = [], []
+    instance = {"n": None, "W": None, "Objects": [weights, values]}
     for ligne in content:
         if ligne[0] == 'i':
-            instance["Objects"].append({'w': int(ligne[1])})
+            instance["Objects"][0].append(int(ligne[1]))
+
+            if len(instance["Objects"][1]) == 0:
+                    instance["Objects"][1] = [[] for _ in range(len(ligne) - 2)]
+
             for k in range(len(ligne)-2):
-                instance["Objects"][-1]["v"+str(k+1)] = int(ligne[k+2])
+                instance["Objects"][1][k].append(int(ligne[k+2]))
 
         elif ligne[0] == 'n':
             instance["n"] = int(ligne[1])
@@ -23,13 +28,6 @@ def read_file(filename):
             instance["W"] = int(ligne[1])
 
     return instance
-
-    # object = instance["Objects"][i]
-    # w, v1, v2 = object["w"], object["v1"], object["v2"]
-
-    # w, v1, v2 = instance[0][i], instance[1][i], instance[2][i]
-
-    # [........................................]
 
 def read_exact_file(filename):
     """
@@ -49,7 +47,7 @@ def plot_solution(x, ax=None, color='blue'):
 
     if ax is None:  fig, ax= plt.subplots()
 
-    ax.scatter(*get_score(x), color=color, s=[5])
+    ax.scatter(*x, color=color, s=[5])
     return ax
 
 
@@ -61,7 +59,7 @@ def plot_non_dominated(non_dominated, ax=None, color='red'):
     if ax is None:
         fig, ax = plt.subplots()
 
-    for i in non_dominated:
+    for _ in non_dominated:
         ax.scatter([i[0] for i in non_dominated], [i[1]
                for i in non_dominated], color=color, s=[2.5] * len(non_dominated))
     return ax
