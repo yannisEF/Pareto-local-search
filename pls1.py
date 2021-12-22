@@ -3,6 +3,102 @@ import matplotlib.pyplot as plt
 
 from read_file import *
 from utils import *
+import itertools
+
+
+def compare_label(label):
+        index_1 = [i for i in range(len(label)) if label[i] == 1]
+        index_0 = [i for i in range(len(label)) if label[i] == 0]
+        label_set = []
+        label_set.append(label)
+        liste0 = [0 for i in range(len(label))]
+        for i in range(1,len(index_1)):
+            p = list(itertools.combinations(index_1, i))
+            for j in p:
+                liste = liste0.copy()
+                for k in j:
+                    liste[k] = 1
+                label_set.append(liste)
+                    
+        for i in range(1,len(index_0)):
+            p = list(itertools.combinations(index_0, i))
+            for j in p:
+                label0 = label.copy()
+                for k in j:
+                    label0[k] = 1
+                label_set.append(label0)
+        return label_set
+    
+    
+class solution:
+    def __init__(self, instance): # instance is element in population
+        self.socre = get_score(instance)
+        self.son = [] # full of solution
+        self.length = len(self.socre)
+        self.label = []
+       
+
+class Quad_tree:
+    def __init__(self,solution): # instance is element in population
+        self.root = solution # root is a solution type
+        self.Pareto = [self.root] # full of solution
+        
+    def get_label(x,y):  # y is a new solution [0000] => delete x  [1111]=> delete x
+        return [0 if x.socre[i] > y.socre[i] else 1 for i in range(x.length)]
+    
+    def remove_son(self,current_root,removed):
+        if current_root.son == []:
+            removed.append(current_root)
+            self.Pareto.remove(current_root)
+            return 0
+        else:
+            for i in current_root.son:
+                self.remove_son(i,removed)
+        
+    def update_add_solution(self,current_root,solution,Removed_solution): # Removed_solution = []
+        D = current_root.length
+        solution.label = self.get_label(current_root,solution)
+        if solution.label == [1 for i in range(D)]: # y dominate x, delete x
+            Removed_solution = current_root.son
+            self.remove_son(current_root)
+            self.root = solution
+            return Removed_solution
+        
+        elif solution.label == [0 for i in range(D)]: # x dominate y, do nothing
+            return Removed_solution
+        
+        else:
+            AddIn = True
+            label_compare = compare_label(solution.label)
+            for i in current_root.son:
+                if i.label == label_compare[0]:
+                    new_root = i
+                    AddIn = False
+                    
+                if i.label in label_compare:
+                    if self.get_label(i,solution) == [0 for k in range(D)]: # y is dominated
+                        return Removed_solution
+                    elif self.get_label(i,solution) == [1 for k in range(D)]: # son_x[i] is dominated
+                        self.remove_son(i,Removed_solution)
+                     
+            if AddIn == True:
+                current_root.son.append(solution)
+                self.Pareto.append(solution)
+                return Removed_solution
+            else:
+                update(new_root,solution,Removed_solution)
+             
+
+    def update(self,solution):
+        Removed_solution = []
+        update_add_solution(self.root,solution,Removed_solution)
+        if Removed_solution != []:
+            for i in Removed_solution:
+                rs = []
+                update_add_solution(self.root,i,rs)
+
+
+
 
 class PLS1:
     """
