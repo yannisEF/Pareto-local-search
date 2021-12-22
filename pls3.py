@@ -6,10 +6,10 @@ from utils import *
 from pls1 import PLS1
 
 class PLS3(PLS1):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, init_S=30, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.init_S = 30 if "init_S" not in kwargs.keys() else kwargs["init_S"]
+        self.init_S = init_S
 
     def get_init_pop(self, instance):
         """
@@ -49,5 +49,5 @@ class PLS3(PLS1):
         return pop_index
     
 if __name__ == "__main__":
-    pls3 = PLS3(nb_files=1, nb_tries=1, root2=None)
-    pls3.run()
+    pls3 = PLS3(nb_files=10, nb_tries=1)
+    pls3.run(verbose_progress=False, show=False, show_best=False)

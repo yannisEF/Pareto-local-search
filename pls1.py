@@ -161,6 +161,7 @@ class PLS1:
                 # We continue until convergence is reached
                 while len(population_index) != 0:
                     for current_index in population_index:
+                        current_values = index_to_values(instance, current_index)
                         # We retrieve the neighbours of the current solution
                         neighbours_index = self.get_neighbours(current_index, instance)
                         for neighbour_index in neighbours_index:
@@ -168,8 +169,8 @@ class PLS1:
                             new_solution_index = self.get_solution_from_neighbours(current_index, neighbour_index)
 
                             # We do a preliminary check to see if the neighbour is not already dominated by the current solution
-                            new_solution_weights, current_weights = index_to_values(instance, new_solution_index), index_to_values(instance, current_index)
-                            if not is_dominated(new_solution_weights, current_weights):
+                            new_solution_values = index_to_values(instance, new_solution_index)
+                            if not is_dominated(new_solution_values, current_values):
                                 # We update the Pareto front
                                 if self.update(instance, pareto_index, new_solution_index):
                                     PLS1.update(self, instance, new_population_index, new_solution_index)
@@ -189,6 +190,10 @@ class PLS1:
                     len_population.append(len(population_index))
 
                 len_population = len_population[1:]
+                
+                for sol in pareto_index:
+                    if sum(instance["Objects"][0][i] for i in sol) > instance["W"]:
+                        print("UN : \t", sum(instance["Objects"][0][i] for i in sol), instance["W"])
 
                 # Compute the different scores
                 self.times[-1] += time.time()
@@ -239,7 +244,7 @@ class PLS1:
                     axs[1].plot(best_len_population)
 
                 plt.show()
-    
+
         return pareto_index
     
 if __name__ == "__main__":
