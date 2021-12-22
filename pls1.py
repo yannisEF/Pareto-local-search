@@ -139,6 +139,7 @@ class PLS1:
             if show is True:
                 # Not possible to show in more than 2 dimensions
                 show = len(instance["Objects"][1]) <= 3
+                show_best = show_best and (self.root2 is not None)
 
                 # Initializing plotting parameters
                 best_distance, best_len_population, best_pop = float('inf'), [], []
@@ -200,34 +201,39 @@ class PLS1:
                 # We add the Pareto front to the graphical output
                 if show is True:
                     # We show only the best solution if asked
-                    if self.root2 is not None:
-                        if show_best is True:
-                            if self.distances[-1] < best_distance:
-                                best_distance = self.distances[-1]
-                                best_len_population = len_population
-                                best_pareto = pareto_coords
-                        else:
-                            i1 = 0 if self.nb_tries == 1 else (_, 0)
-                            i2 = 1 if self.nb_tries == 1 else (_, 1)
-                            
-                            for x in pareto_coords:
-                                plot_solution(x, ax=axs[i1])
-                            
-                            if self.root2 is not None:
-                                plot_non_dominated(exacte, ax=axs[i1])
+                    if self.root2 is not None and show_best is True:
+                        if self.distances[-1] < best_distance:
+                            best_distance = self.distances[-1]
+                            best_len_population = len_population
+                            best_pareto = pareto_coords
+                    else:
+                        i1 = 0 if self.nb_tries == 1 else (_, 0)
+                        i2 = 1 if self.nb_tries == 1 else (_, 1)
+                        
+                        for x in pareto_coords:
+                            plot_solution(x, ax=axs[i1])
+                        
+                        if self.root2 is not None:
+                            plot_non_dominated(exacte, ax=axs[i1])
 
-                            axs[i2].plot(len_population)
+                        axs[i2].plot(len_population)
                            
-            if verbose is True: print("File {} on {} tries:\n\t\ttime: {}\n\t\tproportion: {}\n\t\tdistance: {}"
-                                        .format(k, self.nb_tries, get_avg(self.times), get_avg(self.proportions, 3), get_avg(self.distances)))      
+            if verbose is True:
+                show_avg_proportion, show_avg_distance = None, None
+                if self.root2 is not None:
+                    show_avg_proportion = get_avg(self.proportions, 3)
+                    show_avg_distance = get_avg(self.distances)
+
+                print("File {} on {} tries:\n\t\ttime: {}\n\t\tproportion: {}\n\t\tdistance: {}"
+                        .format(k, self.nb_tries, get_avg(self.times), show_avg_proportion, show_avg_distance))      
 
             # We show the graphical output if asked
             if show is True:
-                if show_best is True:
+                if show_best is True and self.root2 is not None:
                     axs[0].set_title("Solutions space")
+
                     for x in best_pareto:  plot_solution(x, ax=axs[0])
-                    if self.root2 is not None:
-                        plot_non_dominated(exacte, ax=axs[0])
+                    plot_non_dominated(exacte, ax=axs[0])
 
                     axs[1].set_title("Evolution of the population's size")
                     axs[1].plot(best_len_population)

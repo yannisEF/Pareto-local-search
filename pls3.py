@@ -49,5 +49,5 @@ class PLS3(PLS1):
         return pop_index
     
 if __name__ == "__main__":
-    pls3 = PLS3(nb_files=1, nb_tries=1)
+    pls3 = PLS3(nb_files=1, nb_tries=1, root2=None)
     pls3.run()
