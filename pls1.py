@@ -23,6 +23,10 @@ class PLS1:
         self.proportions = []
         self.distances = []
 
+        # Pareto front approximation
+        self.pareto_index = []
+        self.pareto_coords = []
+
     def get_init_pop(self, instance):
         """
         Initialize the population with a randomly generated solution
@@ -151,12 +155,12 @@ class PLS1:
 
                 self.times.append(-time.time())
 
-                pareto_index = self.get_init_pop(instance)
-                population_index = pareto_index[:] # Get the initial population
+                self.pareto_index = self.get_init_pop(instance)
+                population_index = self.pareto_index[:] # Get the initial population
                 len_population = [-1, len(population_index)] # History of the pareto front's length
 
                 new_population_index = []
-                visited_index = [set(p) for p in pareto_index[:]] # history of already visited solutions
+                visited_index = [set(p) for p in self.pareto_index[:]] # history of already visited solutions
 
                 # We continue until convergence is reached
                 while len(population_index) != 0:
@@ -172,7 +176,7 @@ class PLS1:
                             new_solution_values = index_to_values(instance, new_solution_index)
                             if not is_dominated(new_solution_values, current_values):
                                 # We update the Pareto front
-                                if self.update(instance, pareto_index, new_solution_index):
+                                if self.update(instance, self.pareto_index, new_solution_index):
                                     PLS1.update(self, instance, new_population_index, new_solution_index)
 
                         # Update the history of already visited solutions to avoid loops
@@ -191,17 +195,18 @@ class PLS1:
 
                 len_population = len_population[1:]
                 
-                for sol in pareto_index:
-                    if sum(instance["Objects"][0][i] for i in sol) > instance["W"]:
-                        print("UN : \t", sum(instance["Objects"][0][i] for i in sol), instance["W"])
+                # Shows error of pls4
+                # for sol in self.pareto_index:
+                #     if sum(instance["Objects"][0][i] for i in sol) > instance["W"]:
+                #         print("UN : \t", sum(instance["Objects"][0][i] for i in sol), instance["W"])
 
                 # Compute the different scores
                 self.times[-1] += time.time()
-                pareto_coords = [get_score(index_to_values(instance, sol_index)) for sol_index in pareto_index]
+                self.pareto_coords = [get_score(index_to_values(instance, sol_index)) for sol_index in self.pareto_index]
 
                 if self.root2 is not None:
-                    self.proportions.append(get_proportion(exacte, pareto_coords))
-                    self.distances.append(get_distance(exacte, [index_to_values(instance, y) for y in pareto_index]))
+                    self.proportions.append(get_proportion(exacte, self.pareto_coords))
+                    self.distances.append(get_distance(exacte, [index_to_values(instance, y) for y in self.pareto_index]))
 
                 # We add the Pareto front to the graphical output
                 if show is True:
@@ -210,12 +215,12 @@ class PLS1:
                         if self.distances[-1] < best_distance:
                             best_distance = self.distances[-1]
                             best_len_population = len_population
-                            best_pareto = pareto_coords
+                            best_pareto = self.pareto_coords
                     else:
                         i1 = 0 if self.nb_tries == 1 else (_, 0)
                         i2 = 1 if self.nb_tries == 1 else (_, 1)
                         
-                        for x in pareto_coords:
+                        for x in self.pareto_coords:
                             plot_solution(x, ax=axs[i1])
                         
                         if self.root2 is not None:
@@ -245,7 +250,16 @@ class PLS1:
 
                 plt.show()
 
-        return pareto_index
+        return self.pareto_index
+    
+    def save_pareto(self, directory="Results/Pareto", filename="Unnamed"):
+        """
+        Save the approximation of the pareto front in to the given path
+        """
+
+        with open("{}/{}.pkl".format(directory, filename), "wb") as f:
+                pickle.dump(self.pareto_coords, f)
+
     
 if __name__ == "__main__":
     pls1 = PLS1(nb_tries=1, nb_files=1)  

@@ -4,6 +4,7 @@ import time
 from read_file import *
 from utils import *
 
+from pls1 import PLS1
 from pls3 import PLS3
 
 class PLS4(PLS3):
