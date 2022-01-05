@@ -12,6 +12,7 @@ def compute_pmr(P, x, y):
     # Variables
     #   All the possible weights of the agregation function
     weights = [model.addVar(vtype='C', name='w{}'.format(i)) for i in range(dim)]
+    # f(x) = w1 * x1 + w2 * x2 + .... 
     
     # Objective
     #   max f(w, x) - f(w, y)
@@ -24,7 +25,9 @@ def compute_pmr(P, x, y):
     #   Weights must sum to 1
     model.addConstr(sum(weights) == 1)
     #   Weights between 0 and 1:
-    for w in weights:   model.addConstr(w <= 1)
+    for w in weights:
+        model.addConstr(w <= 1)
+        model.addConstr(w >= 0)
 
     # Solve the model
     model.optimize()
@@ -37,7 +40,10 @@ def compute_mr(P, x_set, x):
     Compute the max regret of x with respect to x_set
     """
     
-    return max(compute_pmr(P, x, y) for y in x_set)
+    list_pmr = [compute_pmr(P, x, y) for y in x_set]
+
+    mr = max(list_pmr)
+    return [x_set[i] for i in range(len(x_set)) if list_pmr[i] == mr], mr
 
 
 def compute_mmr(P, x_set):
@@ -45,7 +51,10 @@ def compute_mmr(P, x_set):
     Compute the Min Max Regret of x_set according to preferences P
     """
 
-    return min(compute_mr(P, x_set, x) for x in x_set)
+    list_mr = [compute_mr(P, x_set, x)[1] for x in x_set]
+
+    mmr = min(list_mr)
+    return [x_set[i] for i in range(len(x_set)) if list_mr[i] == mmr], mmr
 
 
 if __name__ == "__main__":

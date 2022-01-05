@@ -258,7 +258,7 @@ class PLS1:
         """
 
         with open("{}/{}.pkl".format(directory, filename), "wb") as f:
-                pickle.dump(self.pareto_coords, f)
+            pickle.dump(self.pareto_coords, f)
 
     
 if __name__ == "__main__":

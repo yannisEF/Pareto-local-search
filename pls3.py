@@ -46,8 +46,8 @@ class PLS3(PLS1):
             if len(indiv_index) == 0: raise ValueError("init_S might be to big to initialize the search")
             else:   pop_index.append(indiv_index)
 
-        return pop_index
-    
+        return pop_index    
+
 if __name__ == "__main__":
     pls3 = PLS3(nb_files=1, nb_tries=1)
     pls3.run(verbose_progress=True, show=True, show_best=False)
