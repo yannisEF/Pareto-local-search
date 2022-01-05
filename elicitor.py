@@ -56,12 +56,12 @@ class Elicitor:
             #   Choose xp in argminMR(x, X; P)
             xp = random.choice(list_index_mmr)
             #   Choose yp in argmaxPMR(xp, y; P)
-            # maxxx
-            yp = random.choice([compute_pmr(self.user_preferences, xp, y) for y in self.pareto_front])
+            yp = random.choice(compute_mr(self.user_preferences, self.pareto_front, xp)[0])
             #   Ask the user
             choice = self.decision_maker.choose((xp, yp))
             #   Add the preference to P
             self.user_preferences.append((xp, yp) if choice == xp else (yp, xp))
+            print(self.user_preferences[-1])
         
         return compute_mmr(self.user_preferences, self.pareto_front)
 
@@ -71,8 +71,7 @@ if __name__ == "__main__":
 
     with open("Results/Pareto/2KP100-TA-Pareto.pkl", "rb") as f:
             pareto_front = pickle.load(f)
-    
-    print(pareto_front)
+
     user = DecisionMaker(weighted_sum, len(pareto_front[0]))
     elicitor = Elicitor(pareto_front, user)
 
