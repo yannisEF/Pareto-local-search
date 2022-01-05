@@ -6,7 +6,33 @@ from utils import get_random_weights, get_score
 from utils_elicitation import compute_mmr, compute_mr, compute_pmr
 
 
-class DecisionMaker:
+class User:
+    """
+    Class that allows the user to choose between the best solutions
+    """
+
+    def choose(self, elligibles):
+        """
+        Choose a solution amongst the given array
+        """
+
+        print("Which solution do you prefer?")
+        
+        for i, sol in enumerate(elligibles):
+            print("{} - {}".format(i + 1, sol))
+        
+        user_input = -1
+        while user_input <= 0 or user_input > len(elligibles):
+            try:
+                user_input = int(input())
+            except ValueError:
+                pass
+        
+        print()
+        return elligibles[user_input-1]
+
+
+class DecisionMaker(User):
     """
     Decision maker that holds preference and is able to choose its favourite solution from a given array of proposed solutions
     """
@@ -53,6 +79,7 @@ class Elicitor:
             # Make the decision maker choose between two alternatives (Current solution strategy)
             #   Update mmr
             list_index_mmr, mmr = compute_mmr(self.user_preferences, self.pareto_front)
+            if mmr == 0:    return list_index_mmr, mmr
             #   Choose xp in argminMR(x, X; P)
             xp = random.choice(list_index_mmr)
             #   Choose yp in argmaxPMR(xp, y; P)
@@ -72,7 +99,8 @@ if __name__ == "__main__":
     with open("Results/Pareto/2KP100-TA-Pareto.pkl", "rb") as f:
             pareto_front = pickle.load(f)
 
-    user = DecisionMaker(weighted_sum, len(pareto_front[0]))
+    user = User()
+    # user = DecisionMaker(weighted_sum, len(pareto_front[0]))
     elicitor = Elicitor(pareto_front, user)
 
     print(elicitor.query_user())
