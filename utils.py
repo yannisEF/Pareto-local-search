@@ -10,12 +10,14 @@ def index_to_values(instance, x):
     """
     return [[instance["Objects"][1][v][i] for i in x] for v in range(len(instance["Objects"][1]))]
 
+
 def get_score(x):
     """
     Return sum of the values of a solution for each objective
     """
 
     return tuple(sum(v) for v in x)
+
 
 def get_proportion(Yexact, Yapprox):
     """
@@ -25,15 +27,16 @@ def get_proportion(Yexact, Yapprox):
     return len(set(Yapprox) & set(Yexact)) / len(set(Yexact))
 
 
-def d(x, y, P):
+def d(x, y, P=None):
     """
     Return the weighted euclidian distance between two points
     """
 
+    if P is None:   P = [1 for k in range(len(x))]
     return math.sqrt(sum([P[k] * (x[k] - y[k])**2 for k in range(len(P))]))
 
 
-def dprime(A, y, P):
+def dprime(A, y, P=None):
     """
     Return the shortest distance between y and A
     """
@@ -77,6 +80,7 @@ def is_dominated(x, y):
 
     return is_score_dominated(get_score(x), get_score(y))
 
+
 def normalize(A):
     """
     Normalize a list so that it sums to 1
@@ -84,6 +88,7 @@ def normalize(A):
     
     sA = sum(A)
     return [x / sA for x in A]
+
 
 def get_random_weights(size):
     """
@@ -93,6 +98,7 @@ def get_random_weights(size):
     q = [random.random() for _ in range(size)]
     return normalize(q)
 
+
 def compute_performance_value(instance, weights, index):
     """
     Compute the performance value of a given object
@@ -100,9 +106,47 @@ def compute_performance_value(instance, weights, index):
 
     return sum(weights[i] * instance["Objects"][1][i][index] for i in range(len(weights))) / instance["Objects"][0][index]
 
+
 def compute_performance_value_list(instance, weights, index_objects):
     """
     Compute the list of performance values of a given list of objects
     """
 
     return [compute_performance_value(instance, weights, v) for v in index_objects]
+
+
+def k_means(K, points, min_distance=float("-inf")):
+    """
+    Applies K-means algorithm to a given set of points
+    """
+    
+    new_points = random.sample(points, len(points))
+    clusters = [[new_points[-1], [points.index(new_points.pop())]] for _ in range(K)] # (center, population)
+    point_to_cluster = {ip:None for ip in range(len(points))}
+
+    for i, cluster in enumerate(clusters):
+        point_to_cluster[cluster[-1][0]] = i
+
+    convergence = False
+    while convergence is False:
+        convergence = True
+        for i, point in enumerate(points):
+            distances = [d(point, cluster[0]) for cluster in clusters]
+            best_distance = distances.index(min(distances))
+
+            try:
+                if point_to_cluster[i] is not None:
+                    clusters[point_to_cluster[i]][-1].remove(i)
+            except ValueError:
+                pass
+
+            convergence = convergence and ((best_distance == point_to_cluster[i]) or best_distance <= min_distance)
+            point_to_cluster[i] = best_distance
+            clusters[best_distance][-1].append(i)
+
+        for k in range(len(clusters)):
+            if len(clusters[k][-1]) > 0:
+                clusters[k][0] = [sum(points[ip][i] for ip in clusters[k][-1]) / len(clusters[k][-1]) for i in range(len(points[0]))]
+        
+    
+    return tuple([points[i] for i in cluster[1]] for cluster in clusters)

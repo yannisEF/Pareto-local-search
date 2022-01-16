@@ -49,6 +49,6 @@ class PLS3(PLS1):
         return pop_index    
 
 if __name__ == "__main__":
-    pls3 = PLS3(nb_files=1, nb_tries=1)
-    pls3.run(verbose_progress=True, show=True, show_best=False)
-    pls3.save_pareto(filename=pls3.root.split("/")[-1][:-4].format("Pareto"))
+    pls3 = PLS3(nb_files=1, nb_tries=1, root="Data/Other/2KP200-TA-{}.dat", root2=None)
+    pls3.run(verbose_progress=True, show=False, show_best=False)
+    pls3.save_pareto(filename="Approx_project")
