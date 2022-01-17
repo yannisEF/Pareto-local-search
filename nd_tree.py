@@ -7,7 +7,7 @@ def update_ideal_nadir(function):
     """
 
     def inner(self, *args, **kwargs):
-        if self.counter_since_update % self.ideal_nadir_update_frequency == 0:
+        if self.counter_since_update > 0 and self.counter_since_update % self.ideal_nadir_update_frequency == 0:
             self.compute_ideal_nadir()
         else:
             self.counter_since_update += 1
@@ -80,7 +80,7 @@ class NDTree:
             self.nadir = [min(c.nadir[i] for c in self.children) for i in range(self.dim)]
 
     @update_ideal_nadir
-    def update(self, new_solution):
+    def update(self, new_solution, can_add=True):
         """
         Update the tree with given solution, returns boolean tuple
         should_be_added, should_destroy_leaf, already_added in subTree
@@ -88,13 +88,14 @@ class NDTree:
 
         # Check if new solution dominates one of my child
         if len(self.children) > 0:
-
+            
             already_added, to_remove = False, []
             for child in self.children:
-                should_add, should_remove, already_added_in_child = child.update(new_solution)
+                can_add_in_child = can_add and not already_added
+                should_add, should_remove, already_added_in_child = child.update(new_solution, can_add=can_add_in_child)
                 already_added = already_added or already_added_in_child
                 
-                if should_add and not already_added:
+                if can_add and should_add and not already_added:
                     child.solutions.append(new_solution)
 
                     if len(child.solutions) > self.max_size:
@@ -110,7 +111,11 @@ class NDTree:
                 del child
             
             if len(self.children) == 0:
-                self.solutions = [new_solution]
+                if can_add is True:
+                    self.solutions = [new_solution]
+                else:
+                    return False, True, False
+                    
             elif len(self.children) == 1:
                 self.__init__(parent=self.parent, solutions=self.children[0].solutions)
             
