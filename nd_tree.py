@@ -1,9 +1,10 @@
+from pydoc import describe
 from utils import *
 
 
-def update_ideal_nadir(function):
+def update_decorator(function):
     """
-    Decorator to check the update frequency of the nadir and ideal points
+    Decorator to check the update frequency of the nadir and ideal points, and divide the tree if too many elements
     """
 
     def inner(self, *args, **kwargs):
@@ -12,7 +13,13 @@ def update_ideal_nadir(function):
         else:
             self.counter_since_update += 1
         
-        return function(self, *args, **kwargs)
+        
+        res = function(self, *args, **kwargs)
+
+        if len(self.children) == 0 and len(self.solutions) > self.max_size:
+            self.divide_tree()
+
+        return res
 
     return inner
 
@@ -22,31 +29,50 @@ class NDTree:
     NDTree data structure (maximization)
     """
 
-    def __init__(self, parent=None, solutions=[], max_size=20, ideal_nadir_update_frequency=1) -> None:
+    def __init__(self, parent=None, solutions=[], max_size=20, ideal_nadir_update_frequency=1,
+                 instance=None, get_score_function=lambda inst, x:get_score(index_to_values(inst, x))) -> None:
         # Approximation of the ideal and nadir points of the tree
         self.ideal = None
         self.nadir = None
 
         # Solutions in the NDTree
-        self.solutions = solutions
+        self.solutions = []
+        self.instance = instance
         self.max_size = max_size
-
-        self.dim = len(self.solutions[0])   
+        self.old_get_score_function = get_score_function
+        self.get_score_function = lambda x: get_score_function(self.instance, x)
 
         # Children NDTrees
         self.parent = parent
         self.children = []
+        self.add_where = [] # Containing where new solutions can be added to
 
         # Counter to update nadir and ideal points
         self.counter_since_update = 0
         self.ideal_nadir_update_frequency = ideal_nadir_update_frequency
 
         # Compute nadir and ideal points
-        self.compute_ideal_nadir()
+        if len(solutions) > 0:
+            first_score = self.get_score_function(solutions[0])
+            self.ideal, self.nadir = first_score, first_score
+            self.solutions = [solutions[0]]
 
-        # Clamp the solutions to fit the max size of the tree
-        if len(self.solutions) > self.max_size:
-            self.divide_tree()
+        for sol in solutions[1:]:
+            self.update(sol, initialization=True)
+            
+    def get_solutions(self):
+        """
+        Retrieves all the solutions from the children
+        """
+
+        if len(self.children) == 0:
+            return self.solutions
+        
+        to_return = []
+        for child in self.children:
+            to_return += child.get_solutions()
+        
+        return to_return
 
     def divide_tree(self):
         """
@@ -56,95 +82,146 @@ class NDTree:
         
         cluster1, cluster2 = [], []
 
+        
         # Loop prevents bad luck with empty cluster
         while len(cluster1) == 0 or len(cluster2) == 0:
-            cluster1, cluster2 = k_means(2, self.solutions)
-
-        self.children.append(NDTree(parent=self, solutions=cluster1, max_size=self.max_size))
-        self.children.append(NDTree(parent=self, solutions=cluster2, max_size=self.max_size))
+            cluster1, cluster2 = k_means(2, self.solutions, self.get_score_function)
 
         self.solutions = None
-    
+
+        self.children.append(NDTree(parent=self, solutions=cluster1, max_size=self.max_size,
+                                    instance=self.instance, get_score_function=self.old_get_score_function))
+        self.children.append(NDTree(parent=self, solutions=cluster2, max_size=self.max_size,
+                                    instance=self.instance, get_score_function=self.old_get_score_function))
+
     def compute_ideal_nadir(self):
         """
         Computes the Ideal and the Nadir points of the tree's solutions
         """
 
-        self.counter_since_update = 0
-
         if len(self.children) == 0:
-            self.ideal = [max(s[i] for s in self.solutions) for i in range(self.dim)]
-            self.nadir = [min(s[i] for s in self.solutions) for i in range(self.dim)]
+            score_solutions = [self.get_score_function(s) for s in self.solutions]
+            self.ideal = [max(sol[i] for sol in score_solutions) for i in range(len(score_solutions[0]))]
+            self.nadir = [min(sol[i] for sol in score_solutions) for i in range(len(score_solutions[0]))]
         else:
-            self.ideal = [max(c.ideal[i] for c in self.children) for i in range(self.dim)]
-            self.nadir = [min(c.nadir[i] for c in self.children) for i in range(self.dim)]
+            for child in self.children:
+                child.compute_ideal_nadir()
+            
+            dim = len(self.children[0].ideal)
+            self.ideal = [max(c.ideal[i] for c in self.children) for i in range(dim)]
+            self.nadir = [min(c.nadir[i] for c in self.children) for i in range(dim)]
 
-    @update_ideal_nadir
-    def update(self, new_solution, can_add=True):
+    @update_decorator
+    def update(self, new_solution, new_score=None, initialization=False):
         """
         Update the tree with given solution, returns boolean tuple
-        should_be_added, should_destroy_leaf, already_added in subTree
+        should_add, should_destroy_leaf
         """
 
-        # Check if new solution dominates one of my child
-        if len(self.children) > 0:
-            
-            already_added, to_remove = False, []
-            for child in self.children:
-                can_add_in_child = can_add and not already_added
-                should_add, should_remove, already_added_in_child = child.update(new_solution, can_add=can_add_in_child)
-                already_added = already_added or already_added_in_child
-                
-                if can_add and should_add and not already_added:
-                    child.solutions.append(new_solution)
+        new_score = self.get_score_function(new_solution) if new_score is None else new_score
 
-                    if len(child.solutions) > self.max_size:
-                        child.divide_tree()
+        # Check if the tree is not empty
+        if len(self.children) == 0 and (self.parent is None or initialization is True) and len(self.solutions) == 0:
+            self.solutions = [new_solution]
+            self.nadir, self.ideal = new_score, new_score
+            return True, False
 
-                    already_added = True
+        # Check if the solution is obsolete
+        elif is_score_dominated(new_score, self.nadir):
+            return False, False
 
-                if should_remove is True:
-                    to_remove.append(child)
-            
-            for child in to_remove:
-                self.children.remove(child)
-                del child
-            
-            if len(self.children) == 0:
-                if can_add is True:
-                    self.solutions = [new_solution]
-                else:
-                    return False, True, False
-                    
-            elif len(self.children) == 1:
-                self.__init__(parent=self.parent, solutions=self.children[0].solutions)
-            
-            # Tell the parent nothing more should be done
-            return True, False, True
+        # Check if the leaf is obsolete
+        elif is_score_dominated(self.ideal, new_score):
+            if self.parent is None or initialization is True:
+                self.children = []
+                self.solutions = [new_solution]
+                self.nadir, self.ideal = new_score, new_score
+            return True, True
 
-        # Check if solution is dominated by nadir
-        elif is_score_dominated(new_solution, self.nadir):
-            return False, False, False
-
-        # Check if ideal is dominated by new solution
-        elif is_score_dominated(self.ideal, new_solution):
-            return True, True, False
-        
-        # Check new if solution dominates one of the current solutions
+        # We can't say, have to check solutions one by one
         else:
-            for solution in self.solutions:
-                if is_score_dominated(new_solution, solution):
-                    return False, False
 
-            to_remove = [solution for solution in self.solutions if is_score_dominated(solution, new_solution)]
-            for bad_solution in to_remove:
-                self.solutions.remove(bad_solution)
+            # We have no children to check
+            if len(self.children) == 0:
+                to_remove = []
+                for solution in self.solutions:
+                    sol_score = self.get_score_function(solution)
+                    
+                    # ND-Tree means if one solution dominates the candidate, the latter can be discarded
+                    if is_score_dominated(new_score, sol_score):
+                        return False, False
+                    # List which solutions are now dominated
+                    elif is_score_dominated(sol_score, new_score):
+                        to_remove.append(solution)
+
+                # Removing obsolete solutions
+                for solution in to_remove:
+                    self.solutions.remove(solution)
+                
+                if self.parent is None or initialization is True:
+                    self.solutions.append(new_solution)
+
+                return True, False
+
+            # We have to peek into our children
+            else:
+                # Check the children leaves one by one
+                self.add_where, destroy_where = [], []
+                for child in self.children:
+                    should_add, should_destroy = child.update(new_solution, new_score)
+
+                    if should_add is True:
+                        self.add_where.append(child)
+                    if should_destroy is True:
+                        destroy_where.append(child)
+                
+                # Destroy the obsolete leaves
+                should_add = len(self.add_where) == len(self.children)
+                for child in destroy_where:
+                    self.children.remove(child)
+                    try:
+                        self.add_where.remove(child)
+                    except ValueError:
+                        pass
+                
+                # Only the root can add the solution
+                if (self.parent is None or initialization is True) and should_add:
+
+                    # The new solution destroyed our leaves, so we have to create a new one
+                    if len(self.add_where) == 0:
+                        self.children.append(NDTree(parent=self, solutions=[new_solution], max_size=self.max_size,
+                                                    instance=self.instance, get_score_function=self.old_get_score_function))
+                    else:
+                        child = self.add_where[0]
+                        while len(child.add_where) != 0:
+                            child = child.add_where[0]
                         
-            return True, False, False
+                        if len(child.children) == 0:
+                            child.solutions.append(new_solution)
+                        else:
+                            child.children.append(NDTree(parent=child, solutions=[new_solution], max_size=self.max_size,
+                                                         instance=self.instance, get_score_function=self.old_get_score_function))
+
+                        # Maybe no need to even compute Nadir / Ideal?
+
+                # We absorb our child if its alone
+                if len(self.children) == 1:
+                    child = self.children[0]
+
+                    self.children = child.children
+                    self.solutions = child.solutions
+                    self.ideal, self.nadir = child.ideal, child.nadir
+
+                    del child
+                
+                self.add_where = []
+                return should_add, (len(self.children) == 0)
     
     def __str__(self):
+        pref = 86 * "-" if self.parent is None else ""
+
         if len(self.children) == 0:
-            return "Solutions: \t {}".format(self.solutions)
+            return pref + "\n" + "Solutions: \t {}".format(self.solutions) + "\n" + pref
         
         else:
             text = "Tree with {} children\n".format(len(self.children))
@@ -156,22 +233,39 @@ class NDTree:
                 text += other_child[0] + "\n"
                 for ligne in other_child[1:]:
                     text += "\t" + ligne + "\n"
+            
+            if self.parent is None:
+                text = pref + "\n" + text[:-2] + pref 
 
             return text
 
 
 if __name__ == "__main__":
-    sol = [(1,0),(.5,.5),(0,1)]
-    leaf = NDTree(solutions=sol, max_size=2)
+    # sol = [(1,0),(.5,.5),(0,1)]
+    # leaf = NDTree(solutions=sol, max_size=2, get_score_function=lambda inst, x:x)
 
-    leaf.update((.25,.8))
-    print(leaf)
+    # leaf.update((.25, .8))
+    # leaf.update((.5, .8))
+    # leaf.update((.25, .1))
+    # print(leaf)
 
     import pickle
 
     with open("Results/Pareto/2KP100-TA-Pareto.pkl", "rb") as f:
             pareto_front = pickle.load(f)
 
-    leaf = NDTree(solutions=pareto_front, max_size=20)
+    leaf = NDTree(solutions=pareto_front, max_size=20, get_score_function=lambda inst, x:[i for i in x])
     print(leaf)
+
+    # leaf = NDTree(get_score_function=lambda inst, x:x, max_size=1)
+    # print(leaf)
+
+    # leaf.update((.5,.5))
+    # print(leaf)
+
+    # leaf.update((1,1))
+    # leaf.update((0,9))
+    # leaf.update((1.5,0.8))
+    # leaf.update((-0.4,20))
+    # print(leaf)
 

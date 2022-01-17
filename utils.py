@@ -70,6 +70,7 @@ def is_score_dominated(score_x, score_y):
     """
     Returns True if given score x is dominated by given score y
     """
+
     return all([score_x[k] <= score_y[k] for k in range(len(score_x))])
 
 
@@ -115,13 +116,13 @@ def compute_performance_value_list(instance, weights, index_objects):
     return [compute_performance_value(instance, weights, v) for v in index_objects]
 
 
-def k_means(K, points, min_distance=float("-inf")):
+def k_means(K, points, score_function, min_distance=float("-inf")):
     """
     Applies K-means algorithm to a given set of points
     """
     
     new_points = random.sample(points, len(points))
-    clusters = [[new_points[-1], [points.index(new_points.pop())]] for _ in range(K)] # (center, population)
+    clusters = [[score_function(new_points[-1]), [points.index(new_points.pop())]] for _ in range(K)] # (center, population)
     point_to_cluster = {ip:None for ip in range(len(points))}
 
     for i, cluster in enumerate(clusters):
@@ -131,7 +132,7 @@ def k_means(K, points, min_distance=float("-inf")):
     while convergence is False:
         convergence = True
         for i, point in enumerate(points):
-            distances = [d(point, cluster[0]) for cluster in clusters]
+            distances = [d(score_function(point), cluster[0]) for cluster in clusters]
             best_distance = distances.index(min(distances))
 
             try:
@@ -144,9 +145,15 @@ def k_means(K, points, min_distance=float("-inf")):
             point_to_cluster[i] = best_distance
             clusters[best_distance][-1].append(i)
 
+        # Getting the new average centers according to input function
         for k in range(len(clusters)):
             if len(clusters[k][-1]) > 0:
-                clusters[k][0] = [sum(points[ip][i] for ip in clusters[k][-1]) / len(clusters[k][-1]) for i in range(len(points[0]))]
-        
+                s = [0 for i in range(len(clusters[0][0]))]
+                for ip in clusters[k][-1]:
+                    new_score = score_function(points[ip])
+                    for i in range(len(clusters[0][0])):
+                        s[i] += new_score[i]
+                
+                clusters[k][0] = [p/len(clusters[k][-1]) for p in s]
     
     return tuple([points[i] for i in cluster[1]] for cluster in clusters)

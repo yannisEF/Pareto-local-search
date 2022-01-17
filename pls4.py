@@ -45,7 +45,7 @@ class PLS4(PLS3):
         # Define a new backpack problem of reduced capacity
         new_objects_index = worst_index_to_remove + best_index_to_add
         new_instance = {"n":len(new_objects_index),
-                        "W":instance["W"] - sum(instance["Objects"][0][i] for i in (current_set - set(worst_index_to_remove))),
+                        "W":sum(instance["Objects"][0][i] for i in set(worst_index_to_remove)),
                         "Objects":[
                             [instance["Objects"][0][i] for i in new_objects_index],
                             [[instance["Objects"][1][v][i] for i in new_objects_index] for v in range(n_dim)]
@@ -53,7 +53,7 @@ class PLS4(PLS3):
                         "New index to old":{k:v for k, v in enumerate(new_objects_index)}}
 
         # Solve the new instance to find the neighbours
-        solver = self.solver(nb_tries=1, root=None, root2=None, instance=new_instance, init_S=len(new_objects_index))
+        solver = self.solver(nb_tries=1, root=None, root2=None, instance=new_instance, init_S=len(new_objects_index)//5)
         new_index_offset_neighbours = solver.run(verbose=False, verbose_progress=False, show=False, show_best=False)
         
         # Correct the offset due to new instance
