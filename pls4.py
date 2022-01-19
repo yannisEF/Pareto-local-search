@@ -61,7 +61,8 @@ class PLS4(PLS3):
 
         # Base format of pls1.run defines neighbours as tuple (to remove, to add)
         return [(set(worst_index_to_remove) - set(neigh_index), neigh_index) for neigh_index in new_index_neighbours]
-        
+
+   
 if __name__ == "__main__":
     pls4 = PLS4(nb_files=1, nb_tries=1)
     pls4.run()

@@ -1,4 +1,3 @@
-from pydoc import describe
 from utils import *
 
 
@@ -7,18 +6,17 @@ def update_decorator(function):
     Decorator to check the update frequency of the nadir and ideal points, and divide the tree if too many elements
     """
 
-    def inner(self, *args, **kwargs):
+    def inner(self, *args, **kwargs):        
+        res = function(self, *args, **kwargs)
+        
         if self.counter_since_update > 0 and self.counter_since_update % self.ideal_nadir_update_frequency == 0:
             self.compute_ideal_nadir()
         else:
             self.counter_since_update += 1
-        
-        
-        res = function(self, *args, **kwargs)
 
         if len(self.children) == 0 and len(self.solutions) > self.max_size:
             self.divide_tree()
-
+        
         return res
 
     return inner
@@ -29,7 +27,7 @@ class NDTree:
     NDTree data structure (maximization)
     """
 
-    def __init__(self, parent=None, solutions=[], max_size=20, ideal_nadir_update_frequency=1,
+    def __init__(self, parent=None, solutions=[], max_size=20, ideal_nadir_update_frequency=5,
                  instance=None, get_score_function=lambda inst, x:get_score(index_to_values(inst, x))) -> None:
         # Approximation of the ideal and nadir points of the tree
         self.ideal = None
@@ -40,7 +38,7 @@ class NDTree:
         self.instance = instance
         self.max_size = max_size
         self.old_get_score_function = get_score_function
-        self.get_score_function = lambda x: get_score_function(self.instance, x)
+        self.get_score_function = lambda x: list(get_score_function(self.instance, x))
 
         # Children NDTrees
         self.parent = parent
@@ -54,15 +52,24 @@ class NDTree:
         # Compute nadir and ideal points
         if len(solutions) > 0:
             first_score = self.get_score_function(solutions[0])
-            self.ideal, self.nadir = first_score, first_score
+            self.ideal, self.nadir = first_score[:], first_score[:]
             self.solutions = [solutions[0]]
 
         for sol in solutions[1:]:
             self.update(sol, initialization=True)
-            
+
+    def reset(self):
+        """
+        Reset the tree
+        """
+
+        self.counter_since_update = 0
+        self.ideal, self.nadir = None, None
+        self.solutions, self.children = [], []
+
     def get_solutions(self):
         """
-        Retrieves all the solutions from the children
+        Retrieve all the solutions from the children
         """
 
         if len(self.children) == 0:
@@ -73,6 +80,20 @@ class NDTree:
             to_return += child.get_solutions()
         
         return to_return
+    
+    def add_to_children(self, newSolution, newScore):
+        """
+        Add a solution to the closest child
+        """
+
+        if len(self.children) == 0:
+            self.solutions.append(newSolution)
+            return
+        
+        distances = [(c, d(newScore, c.ideal)) for c in self.children]
+        min(distances, key=lambda x: x[-1])[0].add_to_children(newSolution, newScore)
+        return
+
 
     def divide_tree(self):
         """
@@ -87,7 +108,7 @@ class NDTree:
         while len(cluster1) == 0 or len(cluster2) == 0:
             cluster1, cluster2 = k_means(2, self.solutions, self.get_score_function)
 
-        self.solutions = None
+        self.solutions = []
 
         self.children.append(NDTree(parent=self, solutions=cluster1, max_size=self.max_size,
                                     instance=self.instance, get_score_function=self.old_get_score_function))
@@ -98,18 +119,22 @@ class NDTree:
         """
         Computes the Ideal and the Nadir points of the tree's solutions
         """
-
+        
+        
+        
         if len(self.children) == 0:
             score_solutions = [self.get_score_function(s) for s in self.solutions]
             self.ideal = [max(sol[i] for sol in score_solutions) for i in range(len(score_solutions[0]))]
             self.nadir = [min(sol[i] for sol in score_solutions) for i in range(len(score_solutions[0]))]
         else:
+            
             for child in self.children:
                 child.compute_ideal_nadir()
             
             dim = len(self.children[0].ideal)
             self.ideal = [max(c.ideal[i] for c in self.children) for i in range(dim)]
             self.nadir = [min(c.nadir[i] for c in self.children) for i in range(dim)]
+           
 
     @update_decorator
     def update(self, new_solution, new_score=None, initialization=False):
@@ -123,7 +148,7 @@ class NDTree:
         # Check if the tree is not empty
         if len(self.children) == 0 and (self.parent is None or initialization is True) and len(self.solutions) == 0:
             self.solutions = [new_solution]
-            self.nadir, self.ideal = new_score, new_score
+            self.nadir, self.ideal = new_score[:], new_score[:]
             return True, False
 
         # Check if the solution is obsolete
@@ -135,11 +160,15 @@ class NDTree:
             if self.parent is None or initialization is True:
                 self.children = []
                 self.solutions = [new_solution]
-                self.nadir, self.ideal = new_score, new_score
+                self.nadir, self.ideal = new_score[:], new_score[:]
             return True, True
 
         # We can't say, have to check solutions one by one
         else:
+            # First we always have to update the ideal, regardless of the update frequency
+            for k in range(len(new_score)):
+                if self.ideal[k] < new_score[k]:
+                    self.ideal[k] = new_score[k]
 
             # We have no children to check
             if len(self.children) == 0:
@@ -199,10 +228,7 @@ class NDTree:
                         if len(child.children) == 0:
                             child.solutions.append(new_solution)
                         else:
-                            child.children.append(NDTree(parent=child, solutions=[new_solution], max_size=self.max_size,
-                                                         instance=self.instance, get_score_function=self.old_get_score_function))
-
-                        # Maybe no need to even compute Nadir / Ideal?
+                            child.add_to_children(new_solution, new_score)
 
                 # We absorb our child if its alone
                 if len(self.children) == 1:
@@ -210,7 +236,7 @@ class NDTree:
 
                     self.children = child.children
                     self.solutions = child.solutions
-                    self.ideal, self.nadir = child.ideal, child.nadir
+                    self.ideal, self.nadir = child.ideal[:], child.nadir[:]
 
                     del child
                 
@@ -246,8 +272,9 @@ if __name__ == "__main__":
 
     # leaf.update((.25, .8))
     # leaf.update((.5, .8))
-    # leaf.update((.25, .1))
+    # leaf.update((1, .25))
     # print(leaf)
+    # print(leaf.ideal, leaf.nadir)
 
     import pickle
 
@@ -256,6 +283,7 @@ if __name__ == "__main__":
 
     leaf = NDTree(solutions=pareto_front, max_size=20, get_score_function=lambda inst, x:[i for i in x])
     print(leaf)
+    print(len(leaf.get_solutions()))
 
     # leaf = NDTree(get_score_function=lambda inst, x:x, max_size=1)
     # print(leaf)

@@ -9,7 +9,7 @@ class PLS1:
     Pareto local search, naive version
     """
 
-    def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None):
+    def __init__(self, nb_files=1, nb_tries=1, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None):
         self.nb_files = nb_files
         self.nb_tries = nb_tries
 
