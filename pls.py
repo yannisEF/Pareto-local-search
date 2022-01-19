@@ -6,13 +6,14 @@ from read_file import *
 from utils import *
 from nd_tree import NDTree
 
+
 class PLS:
     """
     Pareto local search with NDTree implementation
     """
 
-    def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None,
-    init_S=20, max_size=20, nadir_ideal_update_frequency=1):
+    def __init__(self, nb_files=1, nb_tries=1, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None,
+    init_S=20, max_size=10, nadir_ideal_update_frequency=10):
         self.nb_files = nb_files
         self.nb_tries = nb_tries
 
@@ -188,6 +189,7 @@ class PLS:
                             if not is_dominated(new_solution_values, current_values):
                                 # We update the Pareto front
 
+
                                 if self.front_tree.update(new_solution_index)[0] is True:
                                     tree_new_population_index.update(new_solution_index)
 
@@ -198,7 +200,7 @@ class PLS:
 
                     # The population holds the newfound solutions that are potentially on the Pareto front
                     population_index = [p for p in tree_new_population_index.get_solutions() if set(p) not in visited_index]
-                    tree_new_population_index = NDTree(instance=instance, **self.tree_params)
+                    tree_new_population_index.reset()
                     
                     if verbose_progress is True:    print(len(population_index))
 
