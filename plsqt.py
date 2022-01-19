@@ -1,4 +1,3 @@
-
 import random
 import matplotlib.pyplot as plt
 
@@ -51,42 +50,42 @@ class Quad_tree:
         self.Pareto_index = [self.root.index]
         
     def get_label(self,x,y):  # y is a new solution [0000] => delete y  [1111]=> delete x
-        l = []
-        if max(x.socre) < max(y.socre):
-            for i in range(x.length):
-                if  x.socre[i] > y.socre[i]:
-                    l.append(0)
-                else:
-                    l.append(1)
-                    
-      
-        else:
-            for i in range(x.length):
-                if  x.socre[i] >= y.socre[i]:
-                    l.append(0)
-                else:
-                    l.append(1)
+        l = [0 for i in range(len(x.socre))]
+        eq = []
+        for i in range(len(x.socre)):
+            if x.socre[i] < y.socre[i]:
+                l[i] = 1
+            if x.socre[i] == y.socre[i]:
+                eq.append(i)
+                
+        if max(l) == 1 :
+            for i in eq:
+                l[i] = 1
+            
         return l
     
     
     def remove_son(self,current_root,removed):
         if current_root.son == []:
-            self.Pareto.remove(current_root)
-            self.Pareto_index.remove(current_root.index)
             return 1
         else:
             c = current_root.son.copy()
-            for i in c:
+            for i in c:   
                 removed.append(i)
                 current_root.son.remove(i)
                 self.remove_son(i,removed)
+                
+    def remove_son_P(self,removed):
+        for i in removed:
+            self.Pareto.remove(i)
+            self.Pareto_index.remove(i.index)
                 
         
     def update_add_solution(self,current_root,solution,Removed_solution): # Removed_solution = []
         D = current_root.length
         AddIn = True
         solution.label = self.get_label(current_root,solution)
-        if solution.label == [1 for i in range(D)]: # y dominate x, delete x
+        if solution.label == [1 for i in range(D)]: # y dominate x, delete x 
             self.remove_son(current_root,Removed_solution)
             self.root = solution
             self.Pareto = [self.root]
@@ -99,20 +98,23 @@ class Quad_tree:
         
         else:
             label_compare = compare_label(solution.label)
-            for i in current_root.son:
+            c = current_root.son.copy()
+            for i in c: 
                 #if i.label in label_compare:
                 if self.get_label(i,solution) == [0 for k in range(D)]: # y is dominated
                     AddIn = False
                     return AddIn
                 elif self.get_label(i,solution) == [1 for k in range(D)]: # i is dominated
+                    self.Pareto.remove(i)
+                    self.Pareto_index.remove(i.index)
                     self.remove_son(i,Removed_solution)
-                    current_root.son.remove(i)
+                    current_root.son.remove(i) 
+                
             
             for i in current_root.son:
-                if i.label == solution.label:
+                if solution.label == self.get_label(current_root,i): 
                     new_root = i
                     AddIn = False
-                    
             
             if AddIn == True:
                 current_root.son.append(solution)
@@ -121,24 +123,26 @@ class Quad_tree:
                 return AddIn
             else:
                 self.update_add_solution(new_root,solution,Removed_solution)
+                
 
         
     def update(self,instance,new_population_index):
         solu = solution(instance,new_population_index)
         Removed_solution = []
         Add = self.update_add_solution(self.root,solu,Removed_solution)
-            
+        if len(self.Pareto) != 1 and Removed_solution != []:
+            self.remove_son_P(Removed_solution)
+        
         if Removed_solution != []:
             for i in Removed_solution:
                 rs = []
                 self.update_add_solution(self.root,i,rs)
+                
         else:
             return Add
  
         
- 
 
-                
 class PLS_QT(PLS1):
     def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None):
         self.nb_files = nb_files
@@ -192,10 +196,12 @@ class PLS_QT(PLS1):
                 visited_index = [set(p) for p in self.pareto_index[:]] # history of already visited solutions
                 
                 solu = solution(instance,population_index[0])
+                
                 Q = Quad_tree(solu)
                 
                 # We continue until convergence is reached
                 while len(population_index) != 0:
+                #for i in range(1):
                     for current_index in population_index:
                         current_values = index_to_values(instance, current_index)
                         # We retrieve the neighbours of the current solution
@@ -210,6 +216,7 @@ class PLS_QT(PLS1):
                             Q.update(instance, new_solution_index)
                             
                             self.pareto_index = Q.Pareto_index
+                            self.pareto = Q.Pareto
                             new_population_index = Q.Pareto_index
                         #print(len(Q.Pareto))
                             
@@ -226,6 +233,7 @@ class PLS_QT(PLS1):
 
                     # Update the history
                     len_population.append(len(population_index))
+                    
 
                 len_population = len_population[1:]
                 print(len(Q.Pareto_index),len(Q.Pareto))
@@ -270,7 +278,7 @@ class PLS_QT(PLS1):
                     show_avg_distance = get_avg(self.distances)
 
                 print("File {} on {} tries:\n\t\ttime: {}\n\t\tproportion: {}\n\t\tdistance: {}"
-                        .format(k, self.nb_tries, get_avg(self.times), show_avg_proportion, show_avg_distance))
+                        .format(k, self.nb_tries, get_avg(self.times), show_avg_proportion, show_avg_distance))      
 
             # We show the graphical output if asked
             if show is True:
@@ -297,6 +305,5 @@ class PLS_QT(PLS1):
 
     
 if __name__ == "__main__":
-    pls1 = PLS_QT(nb_tries=1, nb_files=1)
-    pls1.run()
-        
+    pls1 = PLS_QT(nb_tries=1, nb_files=1)  
+    pls1.run()        
