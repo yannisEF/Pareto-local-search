@@ -8,8 +8,7 @@ from read_file import *
 from pls1 import *
 
 
-
-def compare_label(label):
+def compare_label(label): # label of later generation need to be compared
         index_1 = [i for i in range(len(label)) if label[i] == 1]
         index_0 = [i for i in range(len(label)) if label[i] == 0]
         label_set = []
@@ -32,61 +31,74 @@ def compare_label(label):
                 label_set.append(label0)
         return label_set
     
-    
 class solution:
     def __init__(self, instance,index): # instance is one element in population
-        self.socre = get_score(index_to_values(instance, index))
-        self.length = len(self.socre)
+        self.score = get_score(index_to_values(instance, index))
+        self.length = len(self.score)
         self.label = []
-        self.son = []
+        self.children = []
         self.index = index
-        
-
-
+    
 class Quad_tree:
-    def __init__(self,solution): # instance is element in population
-        self.root = solution # root is a solution type
-        self.Pareto = [self.root] # full of solution
+    def __init__(self,solution):
+        self.root = solution
+        self.Pareto = [self.root]
         self.Pareto_index = [self.root.index]
         
-    def get_label(self,x,y):  # y is a new solution [0000] => delete y  [1111]=> delete x
-        l = [0 for i in range(len(x.socre))]
+    def get_label(self,x,y):
+        l = [0 for i in range(len(x.score))]
         eq = []
-        for i in range(len(x.socre)):
-            if x.socre[i] < y.socre[i]:
+        for i in range(len(x.score)):
+            if x.score[i] < y.score[i]:
                 l[i] = 1
-            if x.socre[i] == y.socre[i]:
+            if x.score[i] == y.score[i]:
                 eq.append(i)
                 
         if max(l) == 1 :
             for i in eq:
                 l[i] = 1
-            
         return l
     
     
-    def remove_son(self,current_root,removed):
-        if current_root.son == []:
+    def remove_children(self,current_root,removed):
+        if current_root.children == []:
             return 1
         else:
-            c = current_root.son.copy()
+            c = current_root.children.copy()
             for i in c:   
                 removed.append(i)
-                current_root.son.remove(i)
-                self.remove_son(i,removed)
+                current_root.children.remove(i)
+                self.remove_children(i,removed)
                 
-    def remove_son_P(self,removed):
+    def remove_children_P(self,removed): # delete dominated solution
         for i in removed:
             self.Pareto.remove(i)
             self.Pareto_index.remove(i.index)
-                
+            
+    def need_to_compare(self,Removed_solution,solution,current_root,flag): #determine whether the new solution is dominated
+        l = self.get_label(current_root,solution)
+        label_compare = compare_label(l)
+        c = current_root.children.copy()
+        D = current_root.length
+        for child in c:
+            if self.get_label(current_root,child) in label_compare:
+                if self.get_label(child,solution) == [0 for k in range(D)]:
+                    flag.append(1)
+                if self.get_label(child,solution) == [1 for k in range(D)]:
+                    self.Pareto.remove(child)
+                    self.Pareto_index.remove(child.index)
+                    self.remove_children(child,Removed_solution)
+                    current_root.children.remove(child)
+                if child.children != []:
+                    self.need_to_compare(Removed_solution,solution,child,flag)
+       
         
-    def update_add_solution(self,current_root,solution,Removed_solution): # Removed_solution = []
+    def update_add_solution(self,current_root,solution,Removed_solution):
         D = current_root.length
         AddIn = True
         solution.label = self.get_label(current_root,solution)
         if solution.label == [1 for i in range(D)]: # y dominate x, delete x 
-            self.remove_son(current_root,Removed_solution)
+            self.remove_children(current_root,Removed_solution)
             self.root = solution
             self.Pareto = [self.root]
             self.Pareto_index = [self.root.index]
@@ -98,51 +110,39 @@ class Quad_tree:
         
         else:
             label_compare = compare_label(solution.label)
-            c = current_root.son.copy()
-            for i in c: 
-                #if i.label in label_compare:
-                if self.get_label(i,solution) == [0 for k in range(D)]: # y is dominated
-                    AddIn = False
-                    return AddIn
-                elif self.get_label(i,solution) == [1 for k in range(D)]: # i is dominated
-                    self.Pareto.remove(i)
-                    self.Pareto_index.remove(i.index)
-                    self.remove_son(i,Removed_solution)
-                    current_root.son.remove(i) 
-                
-            
-            for i in current_root.son:
-                if solution.label == self.get_label(current_root,i): 
+            flag = []
+            if current_root == self.root:
+                self.need_to_compare(Removed_solution,solution,current_root,flag)
+            if flag != []:
+                return False
+            else:
+                AddIn = True
+            for i in current_root.children:
+                if solution.label == self.get_label(current_root,i):
                     new_root = i
                     AddIn = False
             
             if AddIn == True:
-                current_root.son.append(solution)
+                current_root.children.append(solution)
                 self.Pareto.append(solution)
                 self.Pareto_index.append(solution.index)
                 return AddIn
             else:
                 self.update_add_solution(new_root,solution,Removed_solution)
-                
-
-        
+            
     def update(self,instance,new_population_index):
         solu = solution(instance,new_population_index)
         Removed_solution = []
         Add = self.update_add_solution(self.root,solu,Removed_solution)
         if len(self.Pareto) != 1 and Removed_solution != []:
-            self.remove_son_P(Removed_solution)
-        
+            self.remove_children_P(Removed_solution)
         if Removed_solution != []:
             for i in Removed_solution:
                 rs = []
                 self.update_add_solution(self.root,i,rs)
-                
         else:
             return Add
  
-        
-
 class PLS_QT(PLS1):
     def __init__(self, nb_files=1, nb_tries=10, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None):
         self.nb_files = nb_files
@@ -157,8 +157,6 @@ class PLS_QT(PLS1):
         self.times = []
         self.proportions = []
         self.distances = []
-        
-
         
     def run(self, verbose=True, verbose_progress=True, show=True, show_best=True):
         """
@@ -305,5 +303,9 @@ class PLS_QT(PLS1):
 
     
 if __name__ == "__main__":
-    pls1 = PLS_QT(nb_tries=1, nb_files=1)  
-    pls1.run()        
+    root = "Data/Other/2KP200-TA-{}.dat"
+    save_name = root.split('/')[-1][:-4].format(0) + "_obj={}_crit={}"
+    pls1 = PLS_QT(nb_tries=1, nb_files=1)
+    pls1.run()
+    pls1.save_pareto(filename=save_name)
+    
