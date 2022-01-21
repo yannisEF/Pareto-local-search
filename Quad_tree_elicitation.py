@@ -171,7 +171,6 @@ class PLS_QT(PLS1):
         for k in range(self.nb_files if self.root is not None else 1):
             # Read the file
             instance = self.instance if self.instance is not None else read_file(self.root.format(k))
-            instance = read_file("2KP200-TA-0.dat")
             if self.root2 is not None:
                 exacte = read_exact_file(self.root2.format(k))
             
@@ -239,12 +238,7 @@ class PLS_QT(PLS1):
                     # Update the history
                     #len_population.append(len(population_index))
                     
-                    root = "Data/100_items/2KP100-TA-{}.dat"
-                    save_name = root.split('/')[-1][:-4].format(0) + "_obj={}_crit={}"
-                    self.save_pareto(filename=save_name)
-                
-                    with open("Results/Pareto/2KP100-TA-0_obj={}_crit={}.pkl", "rb") as f:
-                        pareto_front = pickle.load(f)
+                    pareto_front = self.pareto_coords .copy()
                     
                     if len(pareto_front) != 1 :
                         
