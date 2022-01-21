@@ -304,12 +304,7 @@ class PLS1:
                     # Update the history
                     #len_population.append(len(population_index))
                     
-                    root = "Data/100_items/2KP100-TA-{}.dat"
-                    save_name = root.split('/')[-1][:-4].format(0) + "_obj={}_crit={}"
-                    self.save_pareto(filename=save_name)
-                
-                    with open("Results/Pareto/2KP100-TA-0_obj={}_crit={}.pkl", "rb") as f:
-                        pareto_front = pickle.load(f)
+                    pareto_front = self.pareto_coords.copy()
                         
                     if len(pareto_front) != 1:
                         
