@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from bisect import bisect_left
 
 from read_file import *
-from utils import *
+from utils_pls import *
 
 from pls1 import PLS1
 

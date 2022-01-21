@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 
 from read_file import *
-from utils import *
+from utils_pls import *
 
 class PLS1:
     """

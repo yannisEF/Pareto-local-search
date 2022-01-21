@@ -15,7 +15,7 @@ def get_score(x):
     """
     Return sum of the values of a solution for each objective
     """
-
+    
     return tuple(sum(v) for v in x)
 
 

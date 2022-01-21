@@ -1,7 +1,7 @@
 import random
 
 from read_file import *
-from utils import *
+from utils_pls import *
 
 from pls1 import PLS1
 

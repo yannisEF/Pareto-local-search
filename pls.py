@@ -3,7 +3,7 @@ from xml.dom import NO_DATA_ALLOWED_ERR
 import matplotlib.pyplot as plt
 
 from read_file import *
-from utils import *
+from utils_pls import *
 from nd_tree import NDTree
 
 
@@ -188,7 +188,6 @@ class PLS:
                             new_solution_values = index_to_values(instance, new_solution_index)
                             if not is_dominated(new_solution_values, current_values):
                                 # We update the Pareto front
-
 
                                 if self.front_tree.update(new_solution_index)[0] is True:
                                     tree_new_population_index.update(new_solution_index)
