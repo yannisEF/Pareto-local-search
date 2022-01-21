@@ -1,7 +1,7 @@
 import time
 import random
 
-from pls import PLS
+from pls_ndtree import PLS_NDTREE
 
 from elicitor import User, DecisionMaker, Elicitor
 from agregation_functions import weighted_sum, OWA, choquet
@@ -64,14 +64,14 @@ for _ in range(nb_runs):
     real_val = solve_backpack_preference(instance, nb_crit, user)
 
     print(50*" ", end='\r')
-    print("{}/{}".format(_, nb_runs) + "\tSolving with PLS NDTree...", end="\r")
+    print("{}/{}".format(_, nb_runs) + "\tSolving with PLS_NDTREE NDTree...", end="\r")
 
     # First procedure - NDTree
-    pls = PLS(root=None, root2=None, instance=instance)
+    PLS_NDTREE = PLS_NDTREE(root=None, root2=None, instance=instance)
     
     start = time.time()
-    pls.run(verbose_progress=False, show=False, show_best=False)
-    elicitor = Elicitor(pls.pareto_coords, user)
+    PLS_NDTREE.run(verbose_progress=False, show=False, show_best=False)
+    elicitor = Elicitor(PLS_NDTREE.pareto_coords, user)
     opt_val, mmr = elicitor.query_user(verbose=False)
 
     times["first_ndtree"].append(time.time() - start)
@@ -80,7 +80,6 @@ for _ in range(nb_runs):
     mmr_first["first_ndtree"].append(mmr)
 
     # Second procedure
-    pls1_elicitation.run()
 
 # Plotting the results
 #   MMR en fonction du Nombre de questions

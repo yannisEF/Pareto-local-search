@@ -80,12 +80,12 @@ class Elicitor:
           
             # Make the decision maker choose between two alternatives (Current solution strategy)
             #   Update mmr
-            list_index_mmr, mmr = compute_mmr(self.user_preferences, self.pareto_front, dominated)
+            list_index_mmr, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
                 
             #   Choose xp in argminMR(x, X; P)
             xp = random.choice(list_index_mmr)
             #   Choose yp in argmaxPMR(xp, y; P)
-            yp = random.choice(compute_mr(self.user_preferences, self.pareto_front, xp,dominated)[0])
+            yp = random.choice(compute_mr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, xp, dominated)[0])
             #   Ask the user
             choice = self.decision_maker.choose((xp, yp))
             if choice == yp: Notchoice = xp 
@@ -102,11 +102,9 @@ class Elicitor:
                 self.pareto_front.append(Notchoice)
             
             if len(self.pareto_front) == 1:
-                return compute_mmr(self.user_preferences, self.pareto_front,dominated)
-
-            self.number_of_question += 1
+                return compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
                 
-        return compute_mmr(self.user_preferences, self.pareto_front,dominated)
+        return compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
 
 
 if __name__ == "__main__":

@@ -7,13 +7,15 @@ from utils_pls import *
 from nd_tree import NDTree
 
 
-class PLS:
+class PLS_NDTREE:
     """
     Pareto local search with NDTree implementation
+    PLS1 + PLS3 + NDTREE
     """
 
     def __init__(self, nb_files=1, nb_tries=1, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None,
     init_S=20, max_size=10, nadir_ideal_update_frequency=10):
+
         self.nb_files = nb_files
         self.nb_tries = nb_tries
 
@@ -270,5 +272,5 @@ class PLS:
 
     
 if __name__ == "__main__":
-    pls = PLS(nb_tries=1, nb_files=1)  
+    pls = PLS_NDTREE(nb_tries=1, nb_files=1)  
     pls.run()

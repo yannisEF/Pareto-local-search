@@ -6,6 +6,10 @@ from utils_pls import *
 from pls1 import PLS1
 
 class PLS3(PLS1):
+    """
+    PLS with multiple neighbours changed at once
+    """
+    
     def __init__(self, *args, init_S=30, **kwargs):
         super().__init__(*args, **kwargs)
 
