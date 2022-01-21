@@ -48,7 +48,7 @@ class DecisionMaker(User):
         """
         Choose a solution amongst the given array
         """
-        
+                
         return max(elligibles, key=lambda x: self.agregation_function(self.weights, x))
 
 
@@ -68,33 +68,45 @@ class Elicitor:
         self.regret_threshold = regret_threshold # Normalized threshold
 
         self.user_preferences = [] # P
-    
-    def query_user(self, verbose=True):
+
+    def query_user(self):
         """
         Query the user for its preferred solution amongst a given array
         """
 
-        mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front)[1] # Initial MMR with empty preferences
-        initial_mmr = mmr
-
-        # Until MMR > regret threshold
-        while mmr / initial_mmr > self.regret_threshold: 
+        # Until we obtain the optimal solution
+        while len(self.pareto_front) > 0: 
+            dominated = []
+          
             # Make the decision maker choose between two alternatives (Current solution strategy)
             #   Update mmr
-            if verbose is True: print(mmr)
-            list_index_mmr, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front)
-            if mmr == 0:    return list_index_mmr, mmr
+            list_index_mmr, mmr = compute_mmr(self.user_preferences, self.pareto_front, dominated)
+                
             #   Choose xp in argminMR(x, X; P)
             xp = random.choice(list_index_mmr)
             #   Choose yp in argmaxPMR(xp, y; P)
-            yp = random.choice(compute_mr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, xp)[0])
+            yp = random.choice(compute_mr(self.user_preferences, self.pareto_front, xp,dominated)[0])
             #   Ask the user
             choice = self.decision_maker.choose((xp, yp))
+            if choice == yp: Notchoice = xp 
+            else:  Notchoice = yp 
             #   Add the preference to P
             self.user_preferences.append((xp, yp) if choice == xp else (yp, xp))
-            if verbose is True: print(self.user_preferences[-1])
-        
-        return compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front)
+            
+            #   Removing dominated solution
+            dominated.append(Notchoice)
+            dominated = list(set(dominated))
+            for i in dominated: self.pareto_front.remove(i)
+                        
+            if len(self.pareto_front) == 0:
+                self.pareto_front.append(Notchoice)
+            
+            if len(self.pareto_front) == 1:
+                return compute_mmr(self.user_preferences, self.pareto_front,dominated)
+
+            self.number_of_question += 1
+                
+        return compute_mmr(self.user_preferences, self.pareto_front,dominated)
 
 
 if __name__ == "__main__":
