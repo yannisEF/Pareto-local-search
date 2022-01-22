@@ -2,8 +2,8 @@ from bisect import bisect_left
 
 from pls1 import PLS1
 
-from utils_read_file import *
-from utils_pls import *
+from Utils.utils_read_file import *
+from Utils.utils_pls import *
 
 
 class PLS2(PLS1):

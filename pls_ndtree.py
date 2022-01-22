@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 from pls3 import PLS3
 
-from utils_read_file import *
-from utils_pls import *
+from Utils.utils_read_file import *
+from Utils.utils_pls import *
 
 from struct_nd_tree import NDTree
 
@@ -30,7 +30,7 @@ class PLS_NDTREE(PLS3):
 
         return self.front_tree.update(score_x)[0]
 
-    def run(self, verbose_progress=True, show=True, show_best=True):
+    def run(self, verbose=True, verbose_progress=True, show=True, show_best=True):
         """
         Run multiple times the algorithm on the given root
         """
@@ -61,7 +61,7 @@ class PLS_NDTREE(PLS3):
                 population_index = self.get_init_pop(instance) # Get the initial population
                 len_population = [-1, len(population_index)] # History of the pareto front's length
 
-                self.front_tree = NDTree(instance=instance, **self.tree_params)
+                self.front_tree = NDTree(solutions=population_index, instance=instance, **self.tree_params)
 
                 tree_new_population_index = NDTree(instance=instance, **self.tree_params)
                 visited_index = [set(p) for p in population_index] # history of already visited solutions

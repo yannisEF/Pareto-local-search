@@ -3,8 +3,8 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 
-from utils_read_file import *
-from utils_pls import *
+from Utils.utils_read_file import *
+from Utils.utils_pls import *
 
 
 class PLS1:

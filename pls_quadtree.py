@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 from pls3 import PLS3
 
-from utils_pls import *
-from utils_read_file import *
+from Utils.utils_pls import *
+from Utils.utils_read_file import *
 
 from struct_quad_tree import *
 
@@ -86,7 +86,7 @@ class PLS_QUADTREE(PLS3):
                     len_population.append(len(population_index))
 
                 len_population = len_population[1:]
-                print(len(Q.Pareto_index),len(Q.Pareto))
+                if verbose is True: print(len(Q.Pareto_index),len(Q.Pareto))
 
                 # Compute the different scores
                 self.times[-1] += time.time()

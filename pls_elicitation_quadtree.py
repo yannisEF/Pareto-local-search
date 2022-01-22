@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from pls3 import PLS3
 from struct_quad_tree import *
 
-from utils_pls import *
-from utils_read_file import *
+from Utils.utils_pls import *
+from Utils.utils_read_file import *
 
 from elicitor import DecisionMaker, Elicitor
 from agregation_functions import weighted_sum, OWA, choquet

@@ -2,7 +2,7 @@ import random
 
 from pls1 import PLS1
 
-from utils_pls import *
+from Utils.utils_pls import *
 
 
 class PLS3(PLS1):

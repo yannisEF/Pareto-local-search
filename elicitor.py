@@ -2,8 +2,8 @@ import random
 
 from agregation_functions import weighted_sum
 
-from utils_pls import get_random_weights, get_score
-from utils_elicitation import compute_mmr, compute_mr, compute_pmr
+from Utils.utils_pls import get_random_weights, get_score
+from Utils.utils_elicitation import compute_mmr, compute_mr, compute_pmr
 
 
 class User:
@@ -76,9 +76,8 @@ class Elicitor:
         """
 
         # Until we obtain the optimal solution
+        dominated = []
         while len(self.pareto_front) > 0: 
-            dominated = []
-          
             # Make the decision maker choose between two alternatives (Current solution strategy)
             #   Update mmr
             list_index_mmr, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
@@ -107,6 +106,8 @@ class Elicitor:
             
             if len(self.pareto_front) == 1:
                 break
+            
+            dominated = []
                 
         _, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
         self.mmr_list.append(mmr)
