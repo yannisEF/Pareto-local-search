@@ -1,7 +1,5 @@
-import time
 import math
 import random
-import pickle
 
 
 def index_to_values(instance, x):

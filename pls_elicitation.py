@@ -1,16 +1,15 @@
-import random
+import time
 import matplotlib.pyplot as plt
-
-from read_file import *
-from utils_pls import *
 
 from pls1 import PLS1
 from pls3 import PLS3
 
+from utils_read_file import *
+from utils_pls import *
+
 from elicitor import DecisionMaker, Elicitor
 from agregation_functions import weighted_sum, OWA, choquet
 
-import pickle
 
 class PLS_ELICITATION(PLS3):
     """

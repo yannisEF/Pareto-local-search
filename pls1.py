@@ -1,8 +1,11 @@
+import time
 import random
+import pickle
 import matplotlib.pyplot as plt
 
-from read_file import *
+from utils_read_file import *
 from utils_pls import *
+
 
 class PLS1:
     """

@@ -1,135 +1,25 @@
-import random
-from xml.dom import NO_DATA_ALLOWED_ERR
+import time
 import matplotlib.pyplot as plt
 
-from read_file import *
+from pls3 import PLS3
+
+from utils_read_file import *
 from utils_pls import *
-from nd_tree import NDTree
+
+from struct_nd_tree import NDTree
 
 
-class PLS_NDTREE:
+class PLS_NDTREE(PLS3):
     """
     Pareto local search with NDTree implementation
-    PLS1 + PLS3 + NDTREE
     """
 
-    def __init__(self, nb_files=1, nb_tries=1, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff", instance=None,
-    init_S=20, max_size=10, nadir_ideal_update_frequency=10):
+    def __init__(self, *args, max_size=10, nadir_ideal_update_frequency=10, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.nb_files = nb_files
-        self.nb_tries = nb_tries
-
-        # The algorithm's input
-        self.root = root
-        self.root2 = root2
-        self.instance = instance
-
-        # Quality testing
-        self.times = []
-        self.proportions = []
-        self.distances = []
-
-        # Pareto front approximation
-        self.pareto_coords = []
         # NDTree of non-dominated solutions parameters
         self.tree_params = {"max_size":max_size, "ideal_nadir_update_frequency":nadir_ideal_update_frequency}
         self.front_tree = None
-
-        # Init population size
-        self.init_S = init_S
-
-
-    def get_init_pop(self, instance):
-        """
-        Initialize the population with a randomly generated weighted choice
-        """
-
-        n_dim = len(instance["Objects"][1])
-        
-        pop_index = []
-        while len(pop_index) < self.init_S:
-            index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], range(instance["n"])))
-            
-            # Randomly sample a number of weights
-            q = get_random_weights(n_dim)
-            S = 0
-            
-            indiv_index = []
-            while S <= instance['W'] and len(index_objects) > 0:
-                # Define the objects' weights
-                r_obj = compute_performance_value_list(instance, q, index_objects)
-                r_obj = normalize(r_obj)
-
-                # Randomly choose a new object
-                new_index_obj = random.choices(index_objects, weights=r_obj, k=1)[0]
-                index_objects.remove(new_index_obj)
-                
-                # Add it to the population
-                indiv_index.append(new_index_obj)
-                S += instance["Objects"][0][new_index_obj]
-                
-                # Filter the backpack so that only the compatible weigths remain
-                index_objects = list(filter(lambda i: instance["Objects"][0][i] <= instance['W'], index_objects))
-                
-            if len(indiv_index) == 0:
-                raise ValueError("init_S might be to big to initialize the search")
-            else:
-                pop_index.append(indiv_index)
-
-        return pop_index
-
-    def get_neighbours(self, current, instance):
-        """
-        Get a neighbour of the current solution with a 1-1 exchange
-        """
-        
-        other_index_list = set(range(instance["n"])) - set(current) # The other pickable objects
-        S = sum([instance["Objects"][0][i] for i in current]) # The total weight of the current solution
-
-        neighbours = [] # list of neighbours : tuple(object to take off, list of objects to add)
-
-        # We test all the 1-1 combinations
-        for obj_index in current:
-            # We filter out the objects that can not get in
-            filtered_index_others = set(filter(lambda i: instance["Objects"][0][i] <= instance["W"] - S + instance["Objects"][0][obj_index], other_index_list))
-            for other_index in filtered_index_others:
-                copy_index_others = filtered_index_others.copy()
-                copy_index_others.remove(other_index)
-
-                chosen_index_others = [other_index] # the list of objects to add
-                newS =  S - instance["Objects"][0][obj_index] + instance["Objects"][0][other_index] # the new weight with the exchange
-
-                # We update the list of pickable objects
-                copy_index_others = set(filter(lambda i: instance["Objects"][0][i] <= instance['W'] - newS, copy_index_others))
-
-                # We add the exchange to the list of neighbours
-                neighbours.append(([obj_index], chosen_index_others))
-
-                # While there is room in the backpack and that there are objects left to choose
-                while newS <= instance['W'] and len(copy_index_others) > 0:
-                    # Randomly choose an object
-                    new_index_other = random.choice(list(copy_index_others))
-                    copy_index_others.remove(new_index_other)
-
-                    # Add it to the population
-                    chosen_index_others.append(new_index_other)
-                    newS += instance["Objects"][0][new_index_other]
-                    
-                    # Filter the backpack so that only the compatible weigths remain
-                    copy_index_others = set(filter(lambda i: instance["Objects"][0][i] <= instance['W'] - newS, copy_index_others))
-
-        return neighbours
-    
-    def get_solution_from_neighbours(self, current_index, neighbour_index):
-        """
-        Proceed with a 1-1 exchange as defined in get_neighbours method
-        """
-
-        new_solution_index = current_index[:] + neighbour_index[1]
-        for index_to_remove in neighbour_index[0]:
-            new_solution_index.remove(index_to_remove)
-
-        return new_solution_index
 
     def update(self, instance, x):
         """
@@ -261,14 +151,6 @@ class PLS_NDTREE:
                 plt.show()
 
         return self.front_tree.get_solutions()
-    
-    def save_pareto(self, directory="Results/Pareto", filename="Unnamed"):
-        """
-        Save the approximation of the pareto front in to the given path
-        """
-
-        with open("{}/{}.pkl".format(directory, filename), "wb") as f:
-            pickle.dump(self.pareto_coords, f)
 
     
 if __name__ == "__main__":

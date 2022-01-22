@@ -1,10 +1,11 @@
+import time
 import matplotlib.pyplot as plt
 
 from pls3 import PLS3
-from quad_tree import *
+from struct_quad_tree import *
 
 from utils_pls import *
-from read_file import *
+from utils_read_file import *
 
 from elicitor import DecisionMaker, Elicitor
 from agregation_functions import weighted_sum, OWA, choquet

@@ -1,12 +1,10 @@
-import random
-import matplotlib.pyplot as plt
-
 from bisect import bisect_left
 
-from read_file import *
+from pls1 import PLS1
+
+from utils_read_file import *
 from utils_pls import *
 
-from pls1 import PLS1
 
 class PLS2(PLS1):
     """
@@ -61,6 +59,7 @@ class PLS2(PLS1):
         # PROBLEM WITH PARETO
         return True
     
+
 if __name__ == "__main__":
     pls2 = PLS2(nb_files=1, nb_tries=1)
     pls2.run()

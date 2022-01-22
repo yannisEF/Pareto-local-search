@@ -1,10 +1,12 @@
+import time
 import matplotlib.pyplot as plt
 
 from pls3 import PLS3
-from quad_tree import *
 
 from utils_pls import *
-from read_file import *
+from utils_read_file import *
+
+from struct_quad_tree import *
 
  
 class PLS_QUADTREE(PLS3):
@@ -56,7 +58,6 @@ class PLS_QUADTREE(PLS3):
                 
                 # We continue until convergence is reached
                 while len(population_index) != 0:
-                #for i in range(1):
                     for current_index in population_index:
                         # We retrieve the neighbours of the current solution
                         neighbours_index = self.get_neighbours(current_index, instance)
@@ -138,7 +139,8 @@ class PLS_QUADTREE(PLS3):
                 plt.show()
 
         return self.pareto_index
-    
+
+
 if __name__ == "__main__":
     pls_qt = PLS_QUADTREE(nb_tries=1, nb_files=1)
     pls_qt.run()

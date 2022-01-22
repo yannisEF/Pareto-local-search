@@ -68,8 +68,9 @@ class Elicitor:
         self.regret_threshold = regret_threshold # Normalized threshold
 
         self.user_preferences = [] # P
+        self.mmr_list = []
 
-    def query_user(self):
+    def query_user(self, verbose=False):
         """
         Query the user for its preferred solution amongst a given array
         """
@@ -81,30 +82,37 @@ class Elicitor:
             # Make the decision maker choose between two alternatives (Current solution strategy)
             #   Update mmr
             list_index_mmr, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
+            self.mmr_list.append(mmr)
+            if verbose is True: print("MMR =", mmr)
                 
             #   Choose xp in argminMR(x, X; P)
             xp = random.choice(list_index_mmr)
             #   Choose yp in argmaxPMR(xp, y; P)
             yp = random.choice(compute_mr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, xp, dominated)[0])
+
             #   Ask the user
             choice = self.decision_maker.choose((xp, yp))
-            if choice == yp: Notchoice = xp 
-            else:  Notchoice = yp 
+            not_choice = xp if choice == yp else yp
+
             #   Add the preference to P
             self.user_preferences.append((xp, yp) if choice == xp else (yp, xp))
+            if verbose is True: print(self.user_preferences[-1], end="\t")
             
             #   Removing dominated solution
-            dominated.append(Notchoice)
-            dominated = list(set(dominated))
-            for i in dominated: self.pareto_front.remove(i)
+            dominated.append(not_choice)
+            for i in set(dominated): self.pareto_front.remove(i)
                         
             if len(self.pareto_front) == 0:
-                self.pareto_front.append(Notchoice)
+                self.pareto_front.append(not_choice)
             
             if len(self.pareto_front) == 1:
-                return compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
+                break
                 
-        return compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
+        _, mmr = compute_mmr(self.user_preferences, self.decision_maker.agregation_function, self.pareto_front, dominated)
+        self.mmr_list.append(mmr)
+        
+        if verbose is True: print()
+        return _, mmr
 
 
 if __name__ == "__main__":
@@ -117,4 +125,4 @@ if __name__ == "__main__":
     user = DecisionMaker(weighted_sum, len(pareto_front[0]))
     elicitor = Elicitor(pareto_front, user)
 
-    print(elicitor.query_user())
+    print(elicitor.query_user(verbose=True))

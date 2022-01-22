@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-from utils_pls import *
 
 def read_file(filename):
     """
@@ -28,6 +27,7 @@ def read_file(filename):
             instance["W"] = int(ligne[1])
 
     return instance
+
 
 def read_exact_file(filename):
     """

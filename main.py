@@ -7,7 +7,7 @@ from elicitor import User, DecisionMaker, Elicitor
 from agregation_functions import weighted_sum, OWA, choquet
 
 from utils_main import *
-from read_file import *
+from utils_read_file import *
 
 
 # ------------------------- SOLVING PARAMETERS -------------------------
@@ -38,6 +38,7 @@ times = {k:[] for k in methods}
 errors = {k:[] for k in methods}
 questions = {k:[] for k in methods}
 mmr_first = {k:[] for k in methods[:-1]}
+
 
 for _ in range(nb_runs):
 

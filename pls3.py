@@ -1,9 +1,9 @@
 import random
 
-from read_file import *
+from pls1 import PLS1
+
 from utils_pls import *
 
-from pls1 import PLS1
 
 class PLS3(PLS1):
     """
@@ -51,6 +51,7 @@ class PLS3(PLS1):
             else:   pop_index.append(indiv_index)
 
         return pop_index    
+
 
 if __name__ == "__main__":
     pls3 = PLS3(nb_files=1, nb_tries=1, root="Data/100_items/2KP100-TA-{}.dat", root2="Data/100_items/2KP100-TA-{}.eff")

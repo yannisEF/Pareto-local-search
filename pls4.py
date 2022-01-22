@@ -1,7 +1,8 @@
-from read_file import *
+from pls3 import PLS3
+
+from utils_read_file import *
 from utils_pls import *
 
-from pls3 import PLS3
 
 class PLS4(PLS3):
     # NOT WORKING
