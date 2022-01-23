@@ -21,10 +21,10 @@ root = "Data/Other/2KP200-TA-{}.dat"
 
 nb_runs_2 = 20
 nb_obj_to_test_2 = 20
-crit_to_test_2 = [1,2,3]
+crit_to_test_2 = [1,2,3,4,5]
 crit_colors_2 = ["lightskyblue", "chartreuse", "salmon", "mediumorchid", "orange"]
 
-agregators_to_test = {"Weigthed sum":weighted_sum}
+agregators_to_test = {"Weighted Sum":weighted_sum, "OWA":OWA}
 
 
 # --------------------------------------------------------------------------
@@ -66,9 +66,12 @@ for name, agregator in agregators_to_test.items():
             pls_elicitation = PLS_ELICITATION(root=None, root2=None, instance=instance,
                                             agregation_function=user.agregation_function, weights=user.weights)
 
+            # Getting the same initial population
+            init_pop = pls3.get_init_pop(instance)
+
             # Executing each procedure
             start = time.time()
-            pls3.run(verbose_progress=False, show=False, show_best=False, verbose=False)
+            pls3.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
             elicitor = Elicitor(pls3.pareto_coords, user)
             opt_val, mmr = elicitor.query_user(verbose=False)
 
@@ -77,7 +80,7 @@ for name, agregator in agregators_to_test.items():
             question_2["First procedure"].append(len(elicitor.user_preferences))
 
             start = time.time()
-            pls_elicitation.run(verbose_progress=False, show=False, show_best=False, verbose=False)
+            pls_elicitation.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
 
             resolution_time_2["Second procedure"].append(time.time() - start)
             error_2["Second procedure"].append(abs(user.agregation_function(user.weights, pls_elicitation.pareto_coords[0]) - real_val))

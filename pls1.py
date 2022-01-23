@@ -130,7 +130,7 @@ class PLS1:
 
         return True
 
-    def run(self, verbose=True, verbose_progress=True, show=True, show_best=True):
+    def run(self, verbose=True, verbose_progress=True, show=True, show_best=True, init_pop=None):
         """
         Run multiple times the algorithm on the given root
         """
@@ -158,7 +158,7 @@ class PLS1:
 
                 self.times.append(-time.time())
 
-                self.pareto_index = self.get_init_pop(instance)
+                self.pareto_index = self.get_init_pop(instance) if init_pop is None else init_pop
                 population_index = self.pareto_index[:] # Get the initial population
                 len_population = [-1, len(population_index)] # History of the pareto front's length
 
