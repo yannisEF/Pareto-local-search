@@ -18,7 +18,6 @@ root = "Data/Other/2KP200-TA-{}.dat"
 
 # ------------------------- ELICITATION PARAMETERS -------------------------
 
-agr_func = OWA
 manual_input = False
 
 # ------------------------- ANALYSIS PARAMETERS -------------------------

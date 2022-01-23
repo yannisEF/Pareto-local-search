@@ -2,12 +2,12 @@
 
 ## Introduction
 
-Given a set of objects with different weights, we seek the best way to fill our backpack. However, the given objects hold mutli-dimensional score values, hence some solutions are not mutually dominated.
+Given a set of objects with different weights, we seek the best way to fill our backpack. However, the given objects hold multi-dimensional score values, hence some solutions are not mutually dominated.
 
-Therefore, given a user (a decision maker), we aim to propose him with the best solution according to his own preferences and score agregator (unknown to us). In other words, we search for the optimal solution of a given user.
+Therefore, given a user (a decision maker), we aim to propose him with the best solution according to his own preferences and score aggregator (unknown to us). In other words, we search for the optimal solution of a given user.
 
 In this project, we implement two main methods :
-* A two step resolution process: finding an approximation of the set of non dominated solutions; quering the user to get an idea of his preferences
+* A two step resolution process: finding an approximation of the set of non dominated solutions; querying the user to get an idea of his preferences
 * A one step resolution process: mixing incremental elicitation and the resolution process
 
 ## Files
@@ -34,10 +34,10 @@ Files with the *pls* prefix hold various degrees of sophistication for our solvi
 ├── pls1
 │   ├── pls2
 │   ├── pls3
-|   |   ├── pls_quadtree
-|   |   ├── pls_ndtree
-|   |   ├── pls_elicitation
-|   |   └── pls_elicitation_quadtree
+│   │   ├── pls_quadtree
+│   │   ├── pls_ndtree
+│   │   ├── pls_elicitation
+│   │   └── pls_elicitation_quadtree
 └── └── pls4 (not working)
 ```
 
@@ -45,4 +45,4 @@ Files with the *struct* prefix contain data structures for Quad Trees and NDTree
 
 ### Main files
 
-The *main* prefixed files allows you to reproduce our results, editable parameters are defined at the beginning of each file.
+The *main* prefixed files allow you to reproduce our results, editable parameters are defined at the beginning of each file.
