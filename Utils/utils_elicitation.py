@@ -28,9 +28,16 @@ def compute_pmr(P, agregation_function, x, y):
     #   Weights must sum to 1
     model.addConstr(sum(weights) == 1)
     #   Weights between 0 and 1:
-    for w in weights:
-        model.addConstr(w <= 1)
-        model.addConstr(w >= 0)
+    
+    if f == weighted_sum:
+        for w in weights:
+            model.addConstr(w <= 1)
+            model.addConstr(w >= 0)
+    elif f == OWA:
+        for i in range(len(weights)-1):
+            model.addConstr(weights[i] >= weights[i+1])
+            model.addConstr(weights[i] <= 1)
+            model.addConstr(weights[i+1] >= 0)
 
     # Solve the model
     model.optimize()
