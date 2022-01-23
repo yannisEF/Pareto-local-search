@@ -18,7 +18,6 @@ root = "Data/Other/2KP200-TA-{}.dat"
 
 # ------------------------- ELICITATION PARAMETERS -------------------------
 
-agr_func = OWA
 manual_input = False
 
 # ------------------------- ANALYSIS PARAMETERS -------------------------
@@ -26,7 +25,7 @@ manual_input = False
 nb_runs_1 = 20
 nb_obj_to_test_1 = 20
 crit_to_test_1 = [1,2,3,4,5]
-crit_colors_1 = ["lightblue", "lightgreen", "pink", "purple", "orange"]
+crit_colors_1 = ["lightskyblue", "chartreuse", "salmon", "mediumorchid", "orange"]
 
 # --------------------------------------------------------------------------
 #       ------------------------- PART 1 -------------------------
