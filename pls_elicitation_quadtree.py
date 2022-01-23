@@ -21,6 +21,8 @@ class PLS_ELICITATION_QUADTREE(PLS3):
 
         self.agregation_function = agregation_function
         self.hiden_weights = weights
+
+        self.nb_questions = 0
         
     def run(self, verbose=True, verbose_progress=True, show=True, show_best=True):
         """
@@ -59,7 +61,7 @@ class PLS_ELICITATION_QUADTREE(PLS3):
                 popu_ini = get_score(index_to_values(instance, population_index[0])) 
 
                 Optimal = [0]*len(popu_ini)
-                N_question = 0
+                self.nb_questions = 0
                 
                 # We continue until convergence is reached
                 while  popu_ini != Optimal : #and len(population_index) != 0 :
@@ -93,7 +95,7 @@ class PLS_ELICITATION_QUADTREE(PLS3):
                         elicitor = Elicitor(self.pareto_coords, user)
                         elicitor.query_user()
 
-                        N_question += len(elicitor.user_preferences)
+                        self.nb_questions += len(elicitor.user_preferences)
                         Optimal = elicitor.pareto_front[0]
                     
                         # find Optimal's index
@@ -105,8 +107,9 @@ class PLS_ELICITATION_QUADTREE(PLS3):
                     
                         population_index[0].sort()
                         if Optimal_index == population_index[0]:
-                            print("Final result : ", Optimal)
-                            print("number of question :", N_question)
+                            if verbose is True:
+                                print("Final result : ", Optimal)
+                                print("number of question :", self.nb_questions)
                             break
                         else:
                             population_index = [Optimal_index]
@@ -115,12 +118,13 @@ class PLS_ELICITATION_QUADTREE(PLS3):
                     len_population.append(len(population_index))              
 
                 len_population = len_population[1:]
-                print(len(Q.Pareto_index),len(Q.Pareto))
+                if verbose is True:
+                    print(len(Q.Pareto_index),len(Q.Pareto))
                 self.pareto = [i.score for i in Q.Pareto]
 
                 # Compute the different scores
                 self.times[-1] += time.time()
-                self.pareto_coords = [get_score(index_to_values(instance, sol_index)) for sol_index in self.pareto_index]
+                self.pareto_coords = [elicitor.pareto_front[0]]
 
                 if self.root2 is not None:
                     self.proportions.append(get_proportion(exacte, self.pareto_coords))
@@ -172,6 +176,7 @@ class PLS_ELICITATION_QUADTREE(PLS3):
 
     
 if __name__ == "__main__":
-    pls_el_qt = PLS_ELICITATION_QUADTREE(nb_tries=1, nb_files=1)  
-    pls_el_qt.run()    
+    pls_el_qt = PLS_ELICITATION_QUADTREE(nb_files=1, nb_tries=1)
+    pls_el_qt.run(verbose_progress=True, show=True, show_best=False, verbose=False)    
+    print(pls_el_qt.pareto_coords)
     

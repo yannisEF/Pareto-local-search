@@ -18,7 +18,7 @@ def compute_pmr(P, agregation_function, x, y):
     # f(x) = w1 * x1 + w2 * x2 + .... 
     
     # Objective
-    #   max f(w, x) - f(w, y)
+    #   max f(w, y) - f(w, x)
     f = lambda a: agregation_function(weights, a)
     model.setObjective(f(y) - f(x), gp.GRB.MAXIMIZE)
 
