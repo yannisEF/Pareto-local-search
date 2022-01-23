@@ -1,3 +1,5 @@
+from scipy.special import comb, perm
+from itertools import combinations, permutations
 
 def weighted_sum(weights, x_vector):
     return sum(weights[i] * x_vector[i] for i in range(len(weights)))
