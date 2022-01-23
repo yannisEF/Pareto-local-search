@@ -1,5 +1,6 @@
 import time
 
+from pls1 import PLS1
 from pls3 import PLS3
 from pls_ndtree import PLS_NDTREE
 from pls_quadtree import PLS_QUADTREE
@@ -30,7 +31,7 @@ crit_colors_1 = ["lightskyblue", "chartreuse", "salmon", "mediumorchid", "orange
 # --------------------------------------------------------------------------
 #       ------------------------- PART 1 -------------------------
 
-methods = ["No data structure", "QuadTree", "NDtree"]
+methods = ["No data structure", "QuadTree", "ND-Tree"]
 methods_colors = ["dodgerblue", "limegreen", "indianred"]
 
 list_mmr_list = []
@@ -54,8 +55,8 @@ for nb_crit_it in crit_to_test_1:
         pls_ndtree = PLS_NDTREE(root=None, root2=None, instance=instance)
 
         # Getting the same initial population
-        init_pop = pls3.get_init_pop(instance)
-        
+        init_pop = pls3.get_init_pop(instance) # N individus
+
         # Comparing speed of each algorithm
         start = time.time()
         pls3.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
@@ -75,7 +76,7 @@ for nb_crit_it in crit_to_test_1:
 
         start = time.time()
         pls_ndtree.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
-        resolution_time_1["NDtree"].append(time.time() - start)
+        resolution_time_1["ND-Tree"].append(time.time() - start)
 
         elicitor = Elicitor(pls_ndtree.pareto_coords, user)
         elicitor.query_user(verbose=False)

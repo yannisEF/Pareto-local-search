@@ -91,7 +91,7 @@ class PLS_ELICITATION(PLS3):
 
                     # Update the history
                     len_population.append(len(population_index))
-                    pareto_front = self.pareto_coords
+                    pareto_front = self.pareto_coords.copy()
                     if len(self.pareto_coords) != 1:
                         user = DecisionMaker(self.agregation_function, len(pareto_front[0]), self.hidden_weights)
                         elicitor = Elicitor(pareto_front, user)

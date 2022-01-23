@@ -21,7 +21,7 @@ def make_instance(root, nb_obj, nb_crit, random_obj=True):
     return {'n':nb_obj, 'W':int(sum(new_weights)/2), 'Objects':[new_weights, new_values]}
 
 
-def solve_backpack_preference(instance, nb_crit, user):
+def solve_backpack_preference(instance, nb_crit, user, is_OWA=False):
     """
     Solve the backpack problem on a given instance with LP
     Returns the optimal value according to the user's agregation function
@@ -36,7 +36,8 @@ def solve_backpack_preference(instance, nb_crit, user):
     assignement = model.addVars(nb_obj, vtype=gp.GRB.BINARY, name="x")
     
     #   Objective
-    model.setObjective(user.agregation_function(user.weights, [sum(assignement[i] * instance['Objects'][1][k][i] for i in range(nb_obj)) for k in range(nb_crit)]), gp.GRB.MAXIMIZE)
+    new_weights = sorted(user.weights, reverse=True) if is_OWA is True else user.weights
+    model.setObjective(user.agregation_function(new_weights, [sum(assignement[i] * instance['Objects'][1][k][i] for i in range(nb_obj)) for k in range(nb_crit)]), gp.GRB.MAXIMIZE)
 
     #   Constraints
     model.addConstr(sum(assignement[i] * instance['Objects'][0][i] for i in range(nb_obj)) <= instance['W'])

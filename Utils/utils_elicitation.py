@@ -33,11 +33,13 @@ def compute_pmr(P, agregation_function, x, y):
             for w in weights:
                 model.addConstr(w <= 1)
                 model.addConstr(w >= 0)
+            
         elif f == OWA:
             for i in range(len(weights)-1):
                 model.addConstr(weights[i] >= weights[i+1])
                 model.addConstr(weights[i] <= 1)
                 model.addConstr(weights[i+1] >= 0)
+    
     if agregation_function == choquet:
         weights = [model.addVar(vtype='C', name='w{}'.format(i)) for i in range(dim**2)]
         f = lambda a: agregation_function(weights, a)
