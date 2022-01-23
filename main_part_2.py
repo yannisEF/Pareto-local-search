@@ -1,4 +1,6 @@
 import time
+import gurobipy as gp
+model = gp.Model()
 
 from pls_quadtree import PLS_QUADTREE
 
@@ -51,7 +53,7 @@ for name, agregator in agregators_to_test.items():
         question_2 = {k:[] for k in methods}
 
         for _ in range(nb_runs_2):
-            print("{} objectives\t{}/{} runs".format(nb_crit_it, _+1, nb_runs_2), end="\r")
+            print("{} \t{} objectives\t{}/{} runs".format(name, nb_crit_it, _+1, nb_runs_2), end="\r")
             # loading the user
             user = DecisionMaker(agregator, nb_crit_it)
 
