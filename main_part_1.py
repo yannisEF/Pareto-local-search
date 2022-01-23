@@ -52,10 +52,13 @@ for nb_crit_it in crit_to_test_1:
         pls3 = PLS3(root=None, root2=None, instance=instance)
         pls_quadtree = PLS_QUADTREE(root=None, root2=None, instance=instance)
         pls_ndtree = PLS_NDTREE(root=None, root2=None, instance=instance)
+
+        # Getting the same initial population
+        init_pop = pls3.get_init_pop(instance)
         
         # Comparing speed of each algorithm
         start = time.time()
-        pls3.run(verbose_progress=False, show=False, show_best=False, verbose=False)
+        pls3.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
         resolution_time_1["No data structure"].append(time.time() - start)
 
         elicitor = Elicitor(pls3.pareto_coords, user)
@@ -63,7 +66,7 @@ for nb_crit_it in crit_to_test_1:
         mmr_list.append(elicitor.mmr_list)
 
         start = time.time()
-        pls_quadtree.run(verbose_progress=False, show=False, show_best=False, verbose=False)
+        pls_quadtree.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
         resolution_time_1["QuadTree"].append(time.time() - start)
 
         elicitor = Elicitor(pls_quadtree.pareto_coords, user)
@@ -71,7 +74,7 @@ for nb_crit_it in crit_to_test_1:
         mmr_list.append(elicitor.mmr_list)
 
         start = time.time()
-        pls_ndtree.run(verbose_progress=False, show=False, show_best=False, verbose=False)
+        pls_ndtree.run(verbose_progress=False, show=False, show_best=False, verbose=False, init_pop=init_pop)
         resolution_time_1["NDtree"].append(time.time() - start)
 
         elicitor = Elicitor(pls_ndtree.pareto_coords, user)
