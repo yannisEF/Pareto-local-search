@@ -110,19 +110,22 @@ def plot_bar_dict_group(ax, title, list_entry_dict, group_names=None, colors=["l
         group_names = ["" for _ in range(list_entry_dict)]
 
     ax.yaxis.grid(True)
-    ax.set_xticks([round(len(list_entry_dict[0])/2) + k * (len(list_entry_dict[0])+1) for k in range(len(list_entry_dict))])
-    ax.set_xticklabels(group_names)
     ax.set_title(title)
 
     ax.set_ylabel(y_label)
 
+    list_xticks = []
     for j, entry_dict in enumerate(list_entry_dict):
         for i, key in enumerate(entry_dict.keys()):
-            print(j*(len(list_entry_dict) + 1) + i+1)
+            if i == round(len(entry_dict) / 2) - 1:
+                list_xticks.append(j*(len(list_entry_dict) + 1) + i+1)
             bar, = plt.bar(j*(len(list_entry_dict) + 1) + i+1, np.mean(entry_dict[key]), yerr=np.std(entry_dict[key]) if y_err is True else 0, color=colors[i], align="center", ecolor="black")
 
             if j == 0:
                 bar.set_label(key)
+
+    ax.set_xticks(list_xticks)
+    ax.set_xticklabels(group_names)
 
     ax.legend()
     
